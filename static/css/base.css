@@ -1,0 +1,193 @@
+/*
+ * base.css — Full d'estil comú.
+ *
+ * Mòbil primer: es dissenya a 375 px i s'eixampla. Sense cap font externa ni
+ * cap CDN (la política de seguretat de continguts els bloquejaria, i a més
+ * seria una connexió a un tercer des del mòbil del treballador).
+ *
+ * Objectiu d'accessibilitat: WCAG 2.1 AA. Contrast >= 4,5:1, àrees tàctils de
+ * 44 px com a mínim, i cap estat que es distingeixi NOMÉS pel color.
+ */
+
+:root {
+  --blau: #1e4078;
+  --blau-clar: #2f5da8;
+  --fons: #f4f6fa;
+  --paper: #ffffff;
+  --text: #1a1d23;
+  --text-fluix: #555f6d;
+  --vora: #d6dbe4;
+  --verd: #17683a;
+  --verd-fons: #e6f4ec;
+  --vermell: #a01722;
+  --vermell-fons: #fbeaec;
+  --groc: #7a5300;
+  --groc-fons: #fdf3dc;
+  --radi: 10px;
+  --ombra: 0 1px 3px rgba(20, 26, 40, .12);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --blau: #7ea6e8;
+    --blau-clar: #9dbdf2;
+    --fons: #15181e;
+    --paper: #1e222b;
+    --text: #e9ecf2;
+    --text-fluix: #a4adbd;
+    --vora: #333a47;
+    --verd: #6fd398;
+    --verd-fons: #16301f;
+    --vermell: #f3949c;
+    --vermell-fons: #331a1d;
+    --groc: #e8c46a;
+    --groc-fons: #332a14;
+    --ombra: none;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--fons);
+  -webkit-text-size-adjust: 100%;
+}
+
+h1 { font-size: 1.45rem; margin: 0 0 .3rem; }
+h2 { font-size: 1.15rem; margin: 1.4rem 0 .6rem; }
+h3 { font-size: 1rem; margin: 1rem 0 .4rem; }
+a { color: var(--blau); }
+a:focus-visible, button:focus-visible, input:focus-visible,
+select:focus-visible, textarea:focus-visible {
+  outline: 3px solid var(--blau-clar);
+  outline-offset: 2px;
+}
+
+/* -- estructura ---------------------------------------------------------- */
+.capcalera {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: .75rem; padding: .6rem 1rem;
+  background: var(--blau); color: #fff;
+}
+@media (prefers-color-scheme: dark) { .capcalera { background: #10131a; } }
+.marca { color: #fff; font-weight: 600; text-decoration: none; }
+.jo { display: flex; align-items: center; gap: .75rem; font-size: .85rem; }
+.jo-nom { opacity: .9; }
+.jo-enllac { color: #fff; text-decoration: underline; min-height: 44px;
+             display: flex; align-items: center; }
+
+.navegacio {
+  display: flex; gap: .25rem; overflow-x: auto; padding: 0 .5rem;
+  background: var(--paper); border-bottom: 1px solid var(--vora);
+  scrollbar-width: thin;
+}
+.navegacio a {
+  padding: .8rem .8rem; min-height: 44px; display: flex; align-items: center;
+  white-space: nowrap; text-decoration: none; color: var(--text-fluix);
+  border-bottom: 3px solid transparent; font-size: .95rem;
+}
+.navegacio a.actiu { color: var(--blau); border-bottom-color: var(--blau);
+                     font-weight: 600; }
+
+.contingut { max-width: 900px; margin: 0 auto; padding: 1rem .75rem 3rem; }
+
+.peu {
+  max-width: 900px; margin: 0 auto; padding: 1.5rem .75rem 2.5rem;
+  font-size: .8rem; color: var(--text-fluix); text-align: center;
+}
+.peu a { color: var(--text-fluix); }
+
+/* -- targetes ------------------------------------------------------------ */
+.targeta {
+  background: var(--paper); border: 1px solid var(--vora);
+  border-radius: var(--radi); padding: 1rem; margin-bottom: 1rem;
+  box-shadow: var(--ombra);
+}
+.targeta-centrada { text-align: center; }
+.subtitol { color: var(--text-fluix); margin: .2rem 0 .8rem; }
+
+/* -- formularis ---------------------------------------------------------- */
+.camp { display: block; margin-bottom: .9rem; }
+.camp > label { display: block; font-weight: 600; font-size: .9rem;
+                margin-bottom: .25rem; }
+.camp .ajuda { display: block; font-size: .8rem; color: var(--text-fluix); }
+input, select, textarea {
+  width: 100%; padding: .65rem .6rem; font: inherit; color: var(--text);
+  background: var(--paper); border: 1px solid var(--vora);
+  border-radius: var(--radi); min-height: 44px;
+}
+.fila { display: flex; flex-wrap: wrap; gap: .75rem; }
+.fila > .camp { flex: 1 1 10rem; }
+.accions { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center;
+           margin-top: .5rem; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 44px; padding: .6rem 1.1rem; font: inherit; font-weight: 600;
+  color: #fff; background: var(--blau); border: 1px solid var(--blau);
+  border-radius: var(--radi); text-decoration: none; cursor: pointer;
+}
+@media (prefers-color-scheme: dark) {
+  .btn { color: #10131a; }
+}
+.btn:hover { background: var(--blau-clar); border-color: var(--blau-clar); }
+.btn-secundari { background: transparent; color: var(--blau);
+                 border-color: var(--vora); }
+.btn-secundari:hover { background: var(--fons); }
+.btn-perill { background: var(--vermell); border-color: var(--vermell);
+              color: #fff; }
+.btn-gran {
+  width: 100%; min-height: 76px; font-size: 1.4rem; letter-spacing: .02em;
+  border-radius: 14px;
+}
+
+/* -- avisos -------------------------------------------------------------- */
+.avisos { margin-bottom: 1rem; }
+.flash {
+  margin: 0 0 .5rem; padding: .7rem .85rem; border-radius: var(--radi);
+  border: 1px solid var(--vora); font-size: .95rem;
+}
+.flash-ok    { background: var(--verd-fons);    border-color: var(--verd);    color: var(--verd); }
+.flash-avis  { background: var(--groc-fons);    border-color: var(--groc);    color: var(--groc); }
+.flash-error { background: var(--vermell-fons); border-color: var(--vermell); color: var(--vermell); }
+
+/* -- taules -------------------------------------------------------------- */
+.taula-envolt { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.taula { width: 100%; border-collapse: collapse; font-size: .9rem; }
+.taula caption { text-align: left; color: var(--text-fluix);
+                 font-size: .85rem; padding-bottom: .4rem; }
+.taula th, .taula td { padding: .5rem .45rem; text-align: left;
+                       border-bottom: 1px solid var(--vora); }
+.taula th { font-size: .8rem; text-transform: uppercase;
+            letter-spacing: .03em; color: var(--text-fluix); }
+.taula td.xifra, .taula th.xifra { text-align: right;
+                                   font-variant-numeric: tabular-nums; }
+.taula tr.atenuada td { color: var(--text-fluix); background: var(--fons); }
+
+/* -- etiquetes d'estat --------------------------------------------------- */
+/* Sempre amb TEXT: cap estat es distingeix només pel color (accessibilitat). */
+.etiqueta {
+  display: inline-block; padding: .12rem .5rem; border-radius: 999px;
+  font-size: .78rem; font-weight: 600; border: 1px solid var(--vora);
+  background: var(--fons); color: var(--text-fluix); white-space: nowrap;
+}
+.etiqueta-ok      { background: var(--verd-fons);    color: var(--verd);    border-color: var(--verd); }
+.etiqueta-pendent { background: var(--groc-fons);    color: var(--groc);    border-color: var(--groc); }
+.etiqueta-no      { background: var(--vermell-fons); color: var(--vermell); border-color: var(--vermell); }
+
+.positiu { color: var(--verd); font-weight: 600; }
+.negatiu { color: var(--vermell); font-weight: 600; }
+
+.llista-neta { list-style: none; padding: 0; margin: 0; }
+.llista-neta > li { padding: .6rem 0; border-bottom: 1px solid var(--vora); }
+.llista-neta > li:last-child { border-bottom: none; }
+
+@media (min-width: 700px) {
+  h1 { font-size: 1.7rem; }
+  .contingut { padding: 1.5rem 1rem 3rem; }
+}

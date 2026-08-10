@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block titol %}Avís legal{% endblock %}
+{% block contingut %}
+
+<div class="targeta">
+  <h1>Protecció de dades</h1>
+  <p class="subtitol">Informació de l'article 13 del Reglament general de
+     protecció de dades.</p>
+
+  {# ATENCIÓ: els camps entre claudàtors els ha d'omplir l'ajuntament abans
+     que hi entri cap treballador real. Vegeu compliment/NOTA_INFORMATIVA.md. #}
+  <p class="flash flash-avis">
+    Aquest text encara té camps pendents d'omplir i l'aplicació està en fase
+    de <strong>pilot</strong>. No s'hi han de introduir dades reals fins que
+    l'ajuntament no ho hagi validat.
+  </p>
+
+  <h2>Qui tracta les teves dades</h2>
+  <p>[AJUNTAMENT], amb domicili a [ADREÇA] i adreça de contacte
+     [CORREU]. Delegat de protecció de dades: [DPD].</p>
+
+  <h2>Per a què</h2>
+  <p>Per gestionar el control de la jornada laboral, els horaris i les
+     absències del personal municipal.</p>
+
+  <h2>Amb quina base jurídica</h2>
+  <p>El compliment d'una obligació legal (article 34.9 de l'Estatut dels
+     treballadors, que obliga a registrar la jornada) i la gestió de la
+     relació d'ocupació pública. <strong>No es demana consentiment</strong>,
+     perquè en una relació laboral no seria lliure.</p>
+
+  <h2>Quines dades</h2>
+  <p>Nom, adreça electrònica, servei, horari assignat, hores d'entrada i de
+     sortida, i els dies de vacances i d'assumptes propis.</p>
+  <p><strong>No es recull la teva ubicació ni cap dada biomètrica</strong>, i
+     no s'hi registra cap absència per motius de salut. Es registra
+     <em>quan</em> fitxes, mai <em>on</em> ets.</p>
+
+  <h2>Qui hi té accés</h2>
+  <p>Tu, a les teves. El responsable del teu servei, a les del seu servei.
+     L'administrador de l'aplicació. I la Inspecció de Treball i la
+     representació del personal, quan ho demanin, tal com exigeix la llei.</p>
+
+  <h2>On són</h2>
+  <p>L'aplicació està allotjada a la infraestructura de Google Cloud
+     (Firebase) en servidors de la <strong>Unió Europea</strong>. Google actua
+     com a encarregat del tractament.</p>
+
+  <h2>Quant temps</h2>
+  <p>El registre de jornada i les absències es conserven <strong>4 anys</strong>,
+     que és el termini que fixa la normativa laboral. El registre d'accessos a
+     l'aplicació, 1 any.</p>
+
+  <h2>Els teus drets</h2>
+  <p>Pots demanar accés, rectificació, supressió, limitació i oposició
+     adreçant-te a [CORREU]. També pots presentar una reclamació davant de
+     l'Autoritat Catalana de Protecció de Dades (apdcat.gencat.cat).</p>
+
+  <h2>Seguretat</h2>
+  <p>L'accés és personal i amb contrasenya; per als responsables i els
+     administradors, també amb verificació en dos passos. Tota la comunicació
+     va xifrada. Les accions queden registrades.</p>
+</div>
+
+<p class="accions">
+  <a class="btn btn-secundari" href="{{ url_for('auth.login') }}">Torna a l'entrada</a>
+</p>
+
+{% endblock %}

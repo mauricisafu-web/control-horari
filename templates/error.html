@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block titol %}Error {{ codi }}{% endblock %}
+{% block contingut %}
+<div class="targeta targeta-centrada">
+  <h1>{{ codi }}</h1>
+  <p class="subtitol">{{ missatge }}</p>
+  <p class="accions">
+    <a class="btn" href="{{ url_for('fitxatge.inici') }}">Torna a l'inici</a>
+  </p>
+</div>
+{% endblock %}
