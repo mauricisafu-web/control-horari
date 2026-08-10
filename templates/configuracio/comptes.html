@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block titol %}Comptes{% endblock %}
+{% block css_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='css/configuracio.css') }}">{% endblock %}
+{% block contingut %}
+
+<h1>Comptes</h1>
+<p class="accions">
+  <a class="btn btn-secundari" href="{{ url_for('configuracio.index') }}">← Configuració</a>
+</p>
+
+<div class="targeta">
+  <h2>Alta d'un compte</h2>
+  <form method="post" action="{{ url_for('configuracio.compte') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="fila">
+      <p class="camp"><label for="nou-nom">Nom i cognoms</label>
+        <input id="nou-nom" name="nom" required></p>
+      <p class="camp"><label for="nou-correu">Correu</label>
+        <input id="nou-correu" name="correu" type="email" required></p>
+      <p class="camp"><label for="nou-login">Usuari</label>
+        <input id="nou-login" name="login" autocapitalize="none" required></p>
+    </div>
+    <div class="fila">
+      <p class="camp"><label for="nou-servei">Servei</label>
+        <select id="nou-servei" name="servei">
+          <option value="">— cap —</option>
+          {% for s in serveis %}<option value="{{ s.id }}">{{ s.nom }}</option>{% endfor %}
+        </select></p>
+      <p class="camp"><label for="nou-rol">Rol</label>
+        <select id="nou-rol" name="rol">
+          {% for r in rols %}<option value="{{ r }}">{{ etiqueta_rol[r] }}</option>{% endfor %}
+        </select></p>
+      <p class="camp"><label for="nou-alta">Data d'alta</label>
+        <input id="nou-alta" name="data_alta" type="date"></p>
+    </div>
+    <p class="ajuda">Es genera una contrasenya provisional i s'envia al seu
+       correu. La primera vegada que entri, l'aplicació l'obligarà a canviar-la.</p>
+    <p class="accions">
+      <button class="btn" type="submit" name="accio" value="alta">Dona d'alta</button>
+    </p>
+  </form>
+</div>
+
+{% for f in files %}
+<div class="targeta compte {{ 'compte-baixa' if not f.treballador.actiu }}">
+  <div class="pendent-cap">
+    <strong>{{ f.treballador.nom }}</strong>
+    <span class="codi">{{ f.treballador.login }}</span>
+    <span class="etiqueta">{{ etiqueta_rol[f.treballador.rol] }}</span>
+    <span class="etiqueta">{{ f.treballador.servei or 'sense servei' }}</span>
+    {% if f.treballador.totp_actiu %}
+      <span class="etiqueta etiqueta-ok">2 passos</span>{% endif %}
+    {% if not f.treballador.actiu %}
+      <span class="etiqueta etiqueta-no">de baixa</span>{% endif %}
+  </div>
+
+  <p class="nota">
+    {{ f.treballador.correu }}
+    {% if f.treballador.data_alta %} · alta {{ f.treballador.data_alta.strftime('%d/%m/%Y') }}{% endif %}
+    {% if f.treballador.data_baixa %} · baixa {{ f.treballador.data_baixa.strftime('%d/%m/%Y') }}{% endif %}
+  </p>
+
+  {# Saldos: el que hi ha assignat i el que li correspon de debò. #}
+  <form method="post" action="{{ url_for('configuracio.compte') }}" class="fila-edicio">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="login" value="{{ f.treballador.login }}">
+    <input type="hidden" name="any" value="{{ any }}">
+    {% for s in f.saldos %}
+      <label for="{{ s.tipus }}-{{ f.treballador.login }}">
+        {{ model.ETIQUETA_TIPUS[s.tipus] }}</label>
+      <input id="{{ s.tipus }}-{{ f.treballador.login }}" name="{{ s.tipus }}"
+             type="number" value="{{ s.anual }}" min="0" max="60" class="curt">
+      <span class="etiqueta {{ 'etiqueta-no' if s.disponibles < 0 }}">
+        li'n queden {{ s.disponibles }}{% if s.prorratejat %} (prorratejat a {{ s.assignats }}){% endif %}
+      </span>
+    {% endfor %}
+    <button class="btn btn-secundari" type="submit" name="accio" value="saldo">Desa els saldos</button>
+  </form>
+
+  <details>
+    <summary>Rol, servei i àmbit d'aprovació</summary>
+    <form method="post" action="{{ url_for('configuracio.compte') }}" class="fila-edicio">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="login" value="{{ f.treballador.login }}">
+      <label for="rol-{{ f.treballador.login }}">Rol</label>
+      <select id="rol-{{ f.treballador.login }}" name="rol">
+        {% for r in rols %}
+          <option value="{{ r }}" {{ 'selected' if r == f.treballador.rol }}>
+            {{ etiqueta_rol[r] }}</option>
+        {% endfor %}
+      </select>
+      <label for="servei-{{ f.treballador.login }}">Servei</label>
+      <select id="servei-{{ f.treballador.login }}" name="servei">
+        <option value="">— cap —</option>
+        {% for s in serveis %}
+          <option value="{{ s.id }}" {{ 'selected' if s.id == f.treballador.servei_id }}>
+            {{ s.nom }}</option>
+        {% endfor %}
+      </select>
+      <button class="btn btn-secundari" type="submit" name="accio" value="rol">Desa</button>
+    </form>
+
+    {% if f.treballador.rol == 'responsable' %}
+    <form method="post" action="{{ url_for('configuracio.compte') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="login" value="{{ f.treballador.login }}">
+      <fieldset class="ambits">
+        <legend>Quins serveis pot aprovar</legend>
+        <label><input type="checkbox" name="ambit" value="{{ ambit_tots }}"
+                 {{ 'checked' if ambit_tots in f.ambits }}> Tots els serveis</label>
+        {% for s in serveis %}
+          <label><input type="checkbox" name="ambit" value="{{ s.id }}"
+                   {{ 'checked' if s.id in f.ambits }}> {{ s.nom }}</label>
+        {% endfor %}
+      </fieldset>
+      <p class="accions">
+        <button class="btn btn-secundari" type="submit" name="accio" value="ambits">
+          Desa l'àmbit</button>
+      </p>
+    </form>
+    {% endif %}
+  </details>
+
+  <form method="post" action="{{ url_for('configuracio.compte') }}" class="fila-edicio">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="login" value="{{ f.treballador.login }}">
+    {% if f.treballador.actiu %}
+      <label for="baixa-{{ f.treballador.login }}">Data de baixa</label>
+      <input id="baixa-{{ f.treballador.login }}" name="data_baixa" type="date">
+      <button class="btn btn-perill" type="submit" name="accio" value="baixa">
+        Dona de baixa</button>
+    {% else %}
+      <button class="btn btn-secundari" type="submit" name="accio" value="alta_de_nou">
+        Torna a activar</button>
+    {% endif %}
+    <button class="btn btn-secundari" type="submit" name="accio" value="totp_reset">
+      Reinicia els dos passos</button>
+  </form>
+</div>
+{% endfor %}
+
+{% endblock %}

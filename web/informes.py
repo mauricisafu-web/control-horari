@@ -1,10 +1,12 @@
-"""web/informes.py — Esquelet. L'omple una onada posterior."""
+"""web/informes.py — Exportacions. L'omple l'onada 4."""
 from flask import Blueprint, render_template
-from flask_login import login_required
 
-informes = Blueprint('informes', __name__)
+from web.comu import cal_admin
 
-@informes.route('/informes')
-@login_required
+informes = Blueprint("informes", __name__)
+
+
+@informes.route("/informes")
+@cal_admin
 def index():
-    return render_template('en_construccio.html', modul='Informes')
+    return render_template("en_construccio.html", modul="Informes")

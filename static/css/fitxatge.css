@@ -1,0 +1,63 @@
+/*
+ * fitxatge.css — La pantalla que es mira tres segons, dues vegades al dia.
+ *
+ * El botó ha de ser utilitzable amb guants, amb sol i amb una sola mà: per
+ * això ocupa tota l'amplada i fa 76 px d'alçada.
+ */
+
+.rellotge-zona { text-align: center; margin: 1rem 0 1.25rem; }
+
+.rellotge {
+  font-size: 3.75rem; font-weight: 300; line-height: 1; margin: 0;
+  font-variant-numeric: tabular-nums; letter-spacing: -.02em;
+}
+
+.estat { margin: .4rem 0 0; font-size: 1.05rem; color: var(--text-fluix); }
+/* L'estat SEMPRE porta text, mai només color: ha de ser llegible per a
+   qualsevol, també per a qui no distingeix els colors. */
+.estat-dins     { color: var(--verd); font-weight: 600; }
+.estat-en_pausa { color: var(--groc); font-weight: 600; }
+
+.boto-fitxar { margin-bottom: .5rem; }
+.boto-segona { width: 100%; }
+
+.targeta-avis { border-color: var(--groc); }
+
+.xifres dl {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: .5rem; margin: .5rem 0 0;
+}
+.xifres dl > div { text-align: center; }
+.xifres dt { font-size: .78rem; text-transform: uppercase;
+             letter-spacing: .04em; color: var(--text-fluix); }
+.xifres dd { margin: .15rem 0 0; font-size: 1.15rem; font-weight: 600;
+             font-variant-numeric: tabular-nums; }
+
+.nota { font-size: .85rem; color: var(--text-fluix); margin: .4rem 0 0; }
+
+/* -- llista de marcatges -------------------------------------------------- */
+.cal-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: .5rem; margin-bottom: 1rem;
+}
+
+.dia-cap { display: flex; align-items: baseline; justify-content: space-between;
+           gap: .5rem; }
+.dia-cap h2 { margin: 0; font-size: 1rem; }
+.dia-setmana { font-weight: 400; color: var(--text-fluix); font-size: .85rem; }
+.dia-buit { opacity: .75; }
+
+.marcatges li { display: flex; align-items: center; flex-wrap: wrap;
+                gap: .5rem; font-size: .95rem; }
+.marcatges strong { font-variant-numeric: tabular-nums; min-width: 3.2rem; }
+/* Un marcatge anul·lat o rebutjat es veu, però es veu que no compta: el
+   llibre de registre no s'esborra mai. */
+.marcatge-mort { text-decoration: line-through; opacity: .6; }
+
+.correccio { margin-top: .75rem; }
+.correccio summary { cursor: pointer; font-size: .9rem; color: var(--blau);
+                     min-height: 44px; display: flex; align-items: center; }
+
+@media (min-width: 700px) {
+  .rellotge { font-size: 4.5rem; }
+}

@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block titol %}Els meus marcatges{% endblock %}
+{% block css_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='css/fitxatge.css') }}">{% endblock %}
+{% block contingut %}
+
+<h1>Els meus marcatges</h1>
+
+<nav class="cal-nav" aria-label="Canvi de mes">
+  <a class="btn btn-secundari"
+     href="{{ url_for('fitxatge.llista', any=anterior[0], mes=anterior[1]) }}">← Anterior</a>
+  <strong>{{ model.MESOS[mes - 1]|capitalize }} de {{ any }}</strong>
+  <a class="btn btn-secundari"
+     href="{{ url_for('fitxatge.llista', any=seguent[0], mes=seguent[1]) }}">Següent →</a>
+</nav>
+
+{% for dia in resum.dies %}
+  {% set del_dia = per_dia.get(dia.data, []) %}
+  {% if del_dia or dia.anomalies or dia.minuts_teorics %}
+  <div class="targeta dia {{ 'dia-buit' if not del_dia }}">
+    <div class="dia-cap">
+      <h2>{{ dia.data.strftime('%d/%m/%Y') }}
+        <span class="dia-setmana">{{ model.DIES_SETMANA[dia.data.weekday()] }}</span></h2>
+      <span class="{{ 'positiu' if dia.saldo > 0 else 'negatiu' if dia.saldo < 0 }}">
+        {{ formata(dia.saldo) }}</span>
+    </div>
+
+    {% if dia.festiu %}<p class="nota">Festiu: {{ dia.festiu }}</p>{% endif %}
+    {% if dia.absencia %}<p class="nota">{{ dia.absencia }}</p>{% endif %}
+
+    {% if dia.anomalies %}
+      <p class="flash flash-avis">{{ dia.anomalies|join('; ') }}</p>
+    {% endif %}
+
+    {% if del_dia %}
+    <ul class="llista-neta marcatges">
+      {% for m in del_dia %}
+      <li class="{{ 'marcatge-mort' if not m.compta }}">
+        <strong>{{ a_local(m.moment).strftime('%H:%M') }}</strong>
+        {{ etiquetes[m.tipus] }}
+        {% if m.anulat %}<span class="etiqueta">corregit</span>{% endif %}
+        {% if m.estat == 'PENDENT_VALIDACIO' %}
+          <span class="etiqueta etiqueta-pendent">pendent de validar</span>{% endif %}
+        {% if m.estat == 'REBUTJAT' %}
+          <span class="etiqueta etiqueta-no">rebutjat</span>{% endif %}
+        {% if m.origen == 'manual' %}<span class="etiqueta">afegit a mà</span>{% endif %}
+        {% if m.nota %}<span class="nota">{{ m.nota }}</span>{% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    <details class="correccio">
+      <summary>Corregeix aquest dia</summary>
+      <form method="post" action="{{ url_for('fitxatge.corregeix') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="data" value="{{ dia.data.isoformat() }}">
+        <div class="fila">
+          <p class="camp">
+            <label for="orig-{{ dia.data }}">Marcatge a substituir</label>
+            <select id="orig-{{ dia.data }}" name="original">
+              <option value="">— cap: afegeix-ne un de nou —</option>
+              {% for m in del_dia if m.compta %}
+                <option value="{{ m.id }}">
+                  {{ a_local(m.moment).strftime('%H:%M') }} {{ etiquetes[m.tipus] }}</option>
+              {% endfor %}
+            </select>
+          </p>
+          <p class="camp">
+            <label for="tipus-{{ dia.data }}">Tipus</label>
+            <select id="tipus-{{ dia.data }}" name="tipus" required>
+              {% for clau, text in etiquetes.items() %}
+                <option value="{{ clau }}">{{ text }}</option>
+              {% endfor %}
+            </select>
+          </p>
+          <p class="camp">
+            <label for="hora-{{ dia.data }}">Hora correcta</label>
+            <input id="hora-{{ dia.data }}" name="hora" type="time" required>
+          </p>
+        </div>
+        <p class="camp">
+          <label for="nota-{{ dia.data }}">Motiu</label>
+          <input id="nota-{{ dia.data }}" name="nota" required
+                 placeholder="Per exemple: em vaig oblidar de fitxar la sortida">
+          <span class="ajuda">Un responsable ho ha de validar perquè compti.</span>
+        </p>
+        <p class="accions"><button class="btn" type="submit">Desa la correcció</button></p>
+      </form>
+    </details>
+  </div>
+  {% endif %}
+{% endfor %}
+
+{% endblock %}

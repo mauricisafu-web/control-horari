@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block titol %}Hores del servei{% endblock %}
+{% block css_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='css/gestio.css') }}">{% endblock %}
+{% block contingut %}
+
+<h1>Hores del meu àmbit</h1>
+
+<nav class="cal-nav" aria-label="Canvi de mes">
+  <a class="btn btn-secundari"
+     href="{{ url_for('gestio.hores', any=anterior[0], mes=anterior[1]) }}">← Anterior</a>
+  <strong>{{ model.MESOS[mes - 1]|capitalize }} de {{ any }}</strong>
+  <a class="btn btn-secundari"
+     href="{{ url_for('gestio.hores', any=seguent[0], mes=seguent[1]) }}">Següent →</a>
+</nav>
+
+<div class="targeta">
+  <div class="taula-envolt">
+    <table class="taula">
+      <caption>Ordenat pel saldo: primer qui en deu més.</caption>
+      <thead>
+        <tr>
+          <th scope="col">Treballador</th>
+          <th scope="col">Servei</th>
+          <th scope="col" class="xifra">Previstes</th>
+          <th scope="col" class="xifra">Fetes</th>
+          <th scope="col" class="xifra">Absències</th>
+          <th scope="col" class="xifra">Saldo</th>
+          <th scope="col" class="xifra">A repassar</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in files %}
+        <tr>
+          <th scope="row">{{ f.treballador.nom }}</th>
+          <td>{{ f.treballador.servei or '—' }}</td>
+          <td class="xifra">{{ formata(f.resum.minuts_teorics) }}</td>
+          <td class="xifra">{{ formata(f.resum.minuts_fets) }}</td>
+          <td class="xifra">{{ formata(f.resum.minuts_absencia) }}</td>
+          <td class="xifra {{ 'positiu' if f.resum.saldo > 0 else 'negatiu' if f.resum.saldo < 0 }}">
+            {{ '+' if f.resum.saldo > 0 }}{{ formata(f.resum.saldo) }}</td>
+          <td class="xifra">
+            {% if f.incidencies %}
+              <span class="etiqueta etiqueta-pendent">{{ f.incidencies }} dies</span>
+            {% else %}—{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

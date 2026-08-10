@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block titol %}Configuració{% endblock %}
+{% block css_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='css/configuracio.css') }}">{% endblock %}
+{% block contingut %}
+
+<h1>Configuració</h1>
+<p class="accions">
+  <a class="btn btn-secundari" href="{{ url_for('configuracio.pantalla_horaris') }}">Horaris</a>
+  <a class="btn btn-secundari" href="{{ url_for('configuracio.pantalla_comptes') }}">Comptes</a>
+</p>
+
+{# -- serveis -------------------------------------------------------------- #}
+<div class="targeta" id="serveis">
+  <h2>Serveis</h2>
+  {% for s in serveis %}
+  <form method="post" action="{{ url_for('configuracio.servei') }}" class="fila-edicio">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="id" value="{{ s.id }}">
+    <label class="visualment-amagat" for="nom-{{ s.id }}">Nom del servei</label>
+    <input id="nom-{{ s.id }}" name="nom" value="{{ s.nom }}" required>
+    <label class="visualment-amagat" for="color-{{ s.id }}">Color</label>
+    <input id="color-{{ s.id }}" name="color" type="color" value="{{ s.color }}">
+    <span class="etiqueta">{{ per_servei.get(s.id, 0) }} persones</span>
+    <button class="btn btn-secundari" type="submit" name="accio" value="desa">Desa</button>
+    <button class="btn btn-perill" type="submit" name="accio" value="elimina">Esborra</button>
+  </form>
+  {% endfor %}
+
+  <form method="post" action="{{ url_for('configuracio.servei') }}" class="fila-edicio">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label class="visualment-amagat" for="servei-nou">Servei nou</label>
+    <input id="servei-nou" name="nom" placeholder="Servei nou" required>
+    <input name="color" type="color" value="#1e4078" aria-label="Color del servei nou">
+    <button class="btn" type="submit" name="accio" value="crea">Afegeix</button>
+  </form>
+</div>
+
+{# -- festius -------------------------------------------------------------- #}
+<div class="targeta" id="festius">
+  <h2>Festius de {{ any }}</h2>
+
+  <form method="post" action="{{ url_for('configuracio.festiu') }}" class="fila-edicio">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="any-importa">Any</label>
+    <input id="any-importa" name="any" type="number" value="{{ any }}" min="2000" max="2100">
+    <label for="codi-ine">Codi INE del municipi</label>
+    <input id="codi-ine" name="codi_ine" value="{{ parametres.get('codi_ine_municipi', '43152') }}">
+    <button class="btn" type="submit" name="accio" value="importa">
+      Importa'ls de la Generalitat</button>
+  </form>
+  <p class="ajuda">La importació no toca mai els festius que ja hi són: els
+     propis de l'ajuntament guanyen sempre.</p>
+
+  <div class="taula-envolt">
+    <table class="taula">
+      <thead><tr><th scope="col">Data</th><th scope="col">Nom</th>
+                 <th scope="col">Àmbit</th><th scope="col"></th></tr></thead>
+      <tbody>
+        {% for dia, nom, ambit in festius %}
+        <tr>
+          <th scope="row">{{ dia.strftime('%d/%m/%Y') }}</th>
+          <td>{{ nom }}</td>
+          <td><span class="etiqueta">{{ ambit }}</span></td>
+          <td>
+            <form method="post" action="{{ url_for('configuracio.festiu') }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="data" value="{{ dia.isoformat() }}">
+              <button class="btn btn-secundari" type="submit"
+                      name="accio" value="elimina">Treu</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4">Encara no hi ha cap festiu d'aquest any.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <form method="post" action="{{ url_for('configuracio.festiu') }}" class="fila-edicio">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="festiu-data">Data</label>
+    <input id="festiu-data" name="data" type="date" required>
+    <label for="festiu-nom">Nom</label>
+    <input id="festiu-nom" name="nom" placeholder="Festa major" required>
+    <label for="festiu-ambit">Àmbit</label>
+    <select id="festiu-ambit" name="ambit">
+      {% for a in ambits %}<option value="{{ a }}">{{ a }}</option>{% endfor %}
+    </select>
+    <button class="btn" type="submit" name="accio" value="afegeix">Afegeix</button>
+  </form>
+</div>
+
+{# -- paràmetres ----------------------------------------------------------- #}
+<div class="targeta" id="parametres">
+  <h2>Paràmetres</h2>
+  <form method="post" action="{{ url_for('configuracio.parametre') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="fila">
+      {% for clau in editables %}
+      <p class="camp">
+        <label for="p-{{ clau }}">{{ clau.replace('_', ' ')|capitalize }}</label>
+        <input id="p-{{ clau }}" name="{{ clau }}" value="{{ parametres.get(clau, '') }}">
+      </p>
+      {% endfor %}
+    </div>
+    <p class="accions"><button class="btn" type="submit">Desa els paràmetres</button></p>
+  </form>
+</div>
+
+{% endblock %}

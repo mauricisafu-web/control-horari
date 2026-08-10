@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block titol %}Gestió{% endblock %}
+{% block css_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/calendari.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/gestio.css') }}">
+{% endblock %}
+{% block contingut %}
+
+<h1>Gestió</h1>
+
+{# -- absències pendents -------------------------------------------------- #}
+<div class="targeta">
+  <h2>Sol·licituds pendents ({{ pendents|length }})</h2>
+  {% if not pendents %}
+    <p class="subtitol">No hi ha res pendent al teu àmbit.</p>
+  {% endif %}
+
+  {% for p in pendents %}
+  <div class="pendent">
+    <div class="pendent-cap">
+      <strong>{{ p.treballador.nom }}</strong>
+      <span class="etiqueta">{{ p.treballador.servei or 'sense servei' }}</span>
+      <span class="etiqueta">{{ etiqueta_tipus[p.absencia.tipus] }}</span>
+    </div>
+    <p class="pendent-dates">
+      {{ p.absencia.data_inici.strftime('%d/%m/%Y') }} –
+      {{ p.absencia.data_fi.strftime('%d/%m/%Y') }}
+      · <strong>{{ p.absencia.dies }} dies</strong>
+      · <span class="codi">{{ p.absencia.codi }}</span>
+    </p>
+    {% if p.absencia.motiu %}<p class="nota">«{{ p.absencia.motiu }}»</p>{% endif %}
+
+    <p class="nota">
+      Li'n queden <strong>{{ p.saldo.disponibles }}</strong> de
+      {{ p.saldo.assignats }}{% if p.saldo.prorratejat %} (prorratejats){% endif %}.
+    </p>
+
+    {% if p.solapaments %}
+      {# L'avís que evita quedar-se sense ningú a la brigada l'agost. #}
+      <p class="flash flash-avis">Aquests dies també hi ha fora:
+         {{ p.solapaments|join('; ') }}</p>
+    {% endif %}
+
+    {% if p.meva %}
+      <p class="flash flash-avis">Aquesta sol·licitud és teva: l'ha de
+         resoldre una altra persona.</p>
+    {% else %}
+    <form method="post" action="{{ url_for('gestio.resol') }}" class="resolucio">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="codi" value="{{ p.absencia.codi }}">
+      <p class="camp">
+        <label for="motiu-{{ p.absencia.codi }}">Comentari (opcional)</label>
+        <input id="motiu-{{ p.absencia.codi }}" name="motiu" maxlength="300">
+      </p>
+      <p class="accions">
+        <button class="btn" type="submit" name="accio" value="aprova">Aprova</button>
+        <button class="btn btn-perill" type="submit" name="accio" value="denega">Denega</button>
+      </p>
+    </form>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+
+{# -- correccions de marcatge --------------------------------------------- #}
+<div class="targeta">
+  <h2>Correccions de fitxatge per validar ({{ correccions|length }})</h2>
+  {% if not correccions %}
+    <p class="subtitol">No n'hi ha cap de pendent.</p>
+  {% endif %}
+
+  {% for c in correccions %}
+  <div class="pendent">
+    <div class="pendent-cap">
+      <strong>{{ c.treballador.nom if c.treballador else '?' }}</strong>
+      <span class="etiqueta">{{ c.marcatge.data.strftime('%d/%m/%Y') }}</span>
+    </div>
+    <p class="pendent-dates">
+      {% if c.original %}
+        Diu que en lloc de
+        <s>{{ a_local(c.original.moment).strftime('%H:%M') }}
+           {{ etiquetes_marcatge[c.original.tipus] }}</s>
+        hauria de constar
+      {% else %}
+        Demana afegir
+      {% endif %}
+      <strong>{{ a_local(c.marcatge.moment).strftime('%H:%M') }}
+              {{ etiquetes_marcatge[c.marcatge.tipus] }}</strong>
+    </p>
+    {% if c.marcatge.nota %}<p class="nota">«{{ c.marcatge.nota }}»</p>{% endif %}
+
+    {% if not c.puc %}
+      <p class="flash flash-avis">Aquesta correcció l'has feta tu: l'ha de
+         validar una altra persona.</p>
+    {% else %}
+    <form method="post" action="{{ url_for('gestio.marcatge') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="marcatge" value="{{ c.marcatge.id }}">
+      <p class="accions">
+        <button class="btn" type="submit" name="accio" value="valida">Valida</button>
+        <button class="btn btn-perill" type="submit" name="accio" value="rebutja">Rebutja</button>
+      </p>
+    </form>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+
+{# -- calendari de l'àmbit ------------------------------------------------- #}
+<div class="targeta">
+  <h2>Calendari del meu àmbit</h2>
+  <nav class="cal-nav" aria-label="Canvi de mes">
+    <a class="btn btn-secundari"
+       href="{{ url_for('gestio.index', any=graella.mes_anterior[0], mes=graella.mes_anterior[1]) }}">← Anterior</a>
+    <strong>{{ graella.nom_mes|capitalize }} de {{ graella.any }}</strong>
+    <a class="btn btn-secundari"
+       href="{{ url_for('gestio.index', any=graella.mes_seguent[0], mes=graella.mes_seguent[1]) }}">Següent →</a>
+  </nav>
+  {% include "_calendari.html" %}
+  <p class="accions">
+    <a class="btn btn-secundari" href="{{ url_for('gestio.hores') }}">Hores del meu àmbit</a>
+  </p>
+</div>
+
+{% endblock %}

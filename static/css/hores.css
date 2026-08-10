@@ -1,0 +1,27 @@
+/* hores.css — Resum mensual i horari assignat. */
+
+.cal-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: .5rem; margin-bottom: 1rem;
+}
+
+.totals {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: .75rem;
+}
+.totals > div { text-align: center; }
+.totals .etiqueta-total {
+  display: block; font-size: .75rem; text-transform: uppercase;
+  letter-spacing: .04em; color: var(--text-fluix);
+}
+.totals strong { font-size: 1.2rem; font-variant-numeric: tabular-nums; }
+
+.acumulat {
+  margin: 1rem 0 0; padding-top: .75rem; border-top: 1px solid var(--vora);
+  font-size: .95rem; text-align: center;
+}
+
+.dia-setmana { color: var(--text-fluix); font-weight: 400; font-size: .8rem; }
+
+@media (min-width: 600px) {
+  .totals { grid-template-columns: repeat(4, 1fr); }
+}

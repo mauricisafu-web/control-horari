@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block titol %}Fitxar{% endblock %}
+{% block css_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='css/fitxatge.css') }}">{% endblock %}
+{% block contingut %}
+
+<div class="rellotge-zona">
+  <p class="rellotge" id="rellotge">{{ ara }}</p>
+  <p class="estat estat-{{ estat|lower }}">
+    {% if estat == 'DINS' %}Ets DINS des de les {{ des_de }}
+    {% elif estat == 'EN_PAUSA' %}En PAUSA des de les {{ des_de }}
+    {% else %}Ets FORA{% endif %}
+  </p>
+</div>
+
+{# Un sol botó gran amb l'ÚNICA acció que toca. La segona, si n'hi ha, molt
+   més discreta: així no es pot fitxar el que no toca ni per equivocació. #}
+<form method="post" action="{{ url_for('fitxatge.fitxa') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <button class="btn btn-gran boto-fitxar" type="submit"
+          name="tipus" value="{{ accions[0] }}">
+    {{ etiquetes[accions[0]] }}
+  </button>
+  {% if accions|length > 1 %}
+    <button class="btn btn-secundari boto-segona" type="submit"
+            name="tipus" value="{{ accions[1] }}">
+      {{ etiquetes[accions[1]] }}
+    </button>
+  {% endif %}
+</form>
+
+{% if resum.anomalies %}
+<div class="targeta targeta-avis">
+  <h2>Avui hi ha alguna cosa a repassar</h2>
+  <ul>{% for a in resum.anomalies %}<li>{{ a }}</li>{% endfor %}</ul>
+  <p class="accions">
+    <a class="btn btn-secundari" href="{{ url_for('fitxatge.llista') }}">Corregeix-ho</a>
+  </p>
+</div>
+{% endif %}
+
+<div class="targeta xifres">
+  <h2>Avui</h2>
+  <dl>
+    <div><dt>Fetes</dt><dd>{{ formata(resum.minuts_fets) }}</dd></div>
+    <div><dt>Previstes</dt><dd>{{ formata(resum.minuts_teorics) }}</dd></div>
+    <div><dt>Saldo</dt>
+        <dd class="{{ 'positiu' if resum.saldo > 0 else 'negatiu' if resum.saldo < 0 }}">
+          {{ formata(resum.saldo) }}</dd></div>
+  </dl>
+  {% if resum.festiu %}<p class="nota">Avui és festiu: {{ resum.festiu }}.</p>{% endif %}
+  {% if resum.absencia %}<p class="nota">Avui tens {{ resum.absencia|lower }}.</p>{% endif %}
+</div>
+
+<div class="targeta xifres">
+  <h2>Aquest mes</h2>
+  <dl>
+    <div><dt>Fetes</dt><dd>{{ formata(resum_mes.minuts_fets) }}</dd></div>
+    <div><dt>Previstes</dt><dd>{{ formata(resum_mes.minuts_teorics) }}</dd></div>
+    <div><dt>Saldo</dt>
+        <dd class="{{ 'positiu' if resum_mes.saldo > 0 else 'negatiu' if resum_mes.saldo < 0 }}">
+          {{ formata(resum_mes.saldo) }}</dd></div>
+  </dl>
+  <p class="accions">
+    <a href="{{ url_for('hores.resum') }}">Mira el detall del mes</a>
+  </p>
+</div>
+
+{% endblock %}

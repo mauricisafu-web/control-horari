@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block titol %}Les meves hores{% endblock %}
+{% block css_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='css/hores.css') }}">{% endblock %}
+{% block contingut %}
+
+<h1>Les meves hores</h1>
+
+<nav class="cal-nav" aria-label="Canvi de mes">
+  <a class="btn btn-secundari"
+     href="{{ url_for('hores.resum', any=anterior[0], mes=anterior[1]) }}">← Anterior</a>
+  <strong>{{ nom_mes|capitalize }} de {{ any }}</strong>
+  <a class="btn btn-secundari"
+     href="{{ url_for('hores.resum', any=seguent[0], mes=seguent[1]) }}">Següent →</a>
+</nav>
+
+<div class="targeta">
+  <div class="totals">
+    <div><span class="etiqueta-total">Previstes</span>
+         <strong>{{ formata(resum.minuts_teorics) }}</strong></div>
+    <div><span class="etiqueta-total">Fetes</span>
+         <strong>{{ formata(resum.minuts_fets) }}</strong></div>
+    <div><span class="etiqueta-total">Absències</span>
+         <strong>{{ formata(resum.minuts_absencia) }}</strong></div>
+    <div><span class="etiqueta-total">Saldo del mes</span>
+         {# El signe s'escriu SEMPRE: el color és un reforç, no la informació. #}
+         <strong class="{{ 'positiu' if resum.saldo > 0 else 'negatiu' if resum.saldo < 0 }}">
+           {{ '+' if resum.saldo > 0 }}{{ formata(resum.saldo) }}</strong></div>
+  </div>
+  <p class="acumulat">
+    Saldo acumulat de l'any fins al final d'aquest mes:
+    <strong class="{{ 'positiu' if acumulat > 0 else 'negatiu' if acumulat < 0 }}">
+      {{ '+' if acumulat > 0 }}{{ formata(acumulat) }}</strong>
+  </p>
+</div>
+
+<div class="targeta">
+  <div class="taula-envolt">
+    <table class="taula">
+      <caption>Detall dia a dia. Els dies festius i de cap de setmana surten
+        atenuats.</caption>
+      <thead>
+        <tr>
+          <th scope="col">Dia</th>
+          <th scope="col" class="xifra">Previstes</th>
+          <th scope="col" class="xifra">Fetes</th>
+          <th scope="col" class="xifra">Saldo</th>
+          <th scope="col">Estat</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for dia in resum.dies %}
+        <tr class="{{ 'atenuada' if dia.minuts_teorics == 0 }}">
+          <th scope="row">
+            {{ dia.data.strftime('%d/%m') }}
+            <span class="dia-setmana">{{ dies_setmana[dia.data.weekday()][:2] }}</span>
+          </th>
+          <td class="xifra">{{ formata(dia.minuts_teorics) }}</td>
+          <td class="xifra">{{ formata(dia.minuts_fets) }}</td>
+          <td class="xifra {{ 'positiu' if dia.saldo > 0 else 'negatiu' if dia.saldo < 0 }}">
+            {{ '+' if dia.saldo > 0 }}{{ formata(dia.saldo) }}</td>
+          <td>
+            {% if dia.festiu %}<span class="etiqueta">{{ dia.festiu }}</span>{% endif %}
+            {% if dia.absencia %}<span class="etiqueta etiqueta-ok">{{ dia.absencia }}</span>{% endif %}
+            {% if dia.anomalies %}
+              <a class="etiqueta etiqueta-pendent"
+                 href="{{ url_for('fitxatge.llista', any=any, mes=mes) }}">a repassar</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<p class="accions">
+  <a class="btn btn-secundari" href="{{ url_for('hores.horari') }}">Quin horari tinc?</a>
+  <a class="btn btn-secundari" href="{{ url_for('fitxatge.llista', any=any, mes=mes) }}">Veure els marcatges</a>
+</p>
+
+{% endblock %}

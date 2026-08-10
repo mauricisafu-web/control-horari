@@ -1,0 +1,36 @@
+{# Graella mensual compartida. Espera una variable `graella` (core.calendari).
+   La fan servir el calendari personal d'absències i el general de gestió. #}
+<div class="taula-envolt">
+  <table class="cal">
+    <caption class="visualment-amagat">Calendari de
+      {{ graella.nom_mes }} de {{ graella.any }}</caption>
+    <thead>
+      <tr>
+        {% for dia in model.DIES_SETMANA %}
+          <th scope="col" abbr="{{ dia }}">{{ dia[:2]|capitalize }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for setmana in graella.setmanes %}
+      <tr>
+        {% for casella in setmana %}
+        <td class="{{ 'fora-del-mes' if not casella.del_mes }}
+                   {{ 'cap-setmana' if casella.cap_de_setmana }}
+                   {{ 'avui' if casella.avui }}">
+          <span class="cal-dia">{{ casella.dia }}</span>
+          {% if casella.festiu %}
+            <span class="cal-festiu" title="{{ casella.festiu }}">festiu</span>
+          {% endif %}
+          {% for item in casella['items'] %}
+            <span class="cal-item {{ 'cal-pendent' if item.estat == 'PENDENT' }}"
+                  title="{{ item.text }}{% if item.codi %} ({{ item.codi }}){% endif %}">
+              {{ item.text }}</span>
+          {% endfor %}
+        </td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

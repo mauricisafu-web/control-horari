@@ -255,6 +255,9 @@ PARAMETRES_INICIALS = {
     "codi_ine_municipi": "43152",       # la Torre de l'Espanyol
     "jornada_maxima_minuts": 600,       # avís d'anomalia per sobre de 10 h
     "pausa_maxima_minuts": 90,
+    # Finestra antidoble-toc: dos marcatges seguits mes de pressa que
+    # aixo son el mateix toc repetit a la pantalla del mobil.
+    "segons_entre_marcatges": 60,
     "nom_ajuntament": "Ajuntament de la Torre de l'Espanyol",
 }
 

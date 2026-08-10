@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block titol %}El meu horari{% endblock %}
+{% block css_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='css/hores.css') }}">{% endblock %}
+{% block contingut %}
+
+<h1>El meu horari</h1>
+
+{% if not vigent %}
+  <div class="targeta">
+    <p>Encara no tens cap horari assignat.</p>
+    <p class="subtitol">Demana-ho al teu responsable o a qui administra
+       l'aplicació: sense horari assignat, les hores previstes surten a zero.</p>
+  </div>
+{% else %}
+  <div class="targeta">
+    <h2>{{ vigent.patro.nom }}</h2>
+    {% if vigent.patro.descripcio %}
+      <p class="subtitol">{{ vigent.patro.descripcio }}</p>{% endif %}
+    <p>Jornada setmanal: <strong>{{ formata(setmanal) }}</strong>
+      {% if vigent.coeficient != 100 %}
+        <span class="etiqueta">jornada al {{ vigent.coeficient }} %</span>
+      {% endif %}
+    </p>
+
+    <div class="taula-envolt">
+      <table class="taula">
+        <caption>Trams de cada dia de la setmana.</caption>
+        <thead><tr><th scope="col">Dia</th><th scope="col">Horari</th></tr></thead>
+        <tbody>
+          {% for dia in range(1, 8) %}
+          <tr class="{{ 'atenuada' if not per_dia[dia] }}">
+            <th scope="row">{{ dies_setmana[dia - 1]|capitalize }}</th>
+            <td>
+              {% if per_dia[dia] %}
+                {% for t in per_dia[dia] %}
+                  {{ '%02d:%02d'|format(t.hora_inici.hour, t.hora_inici.minute) }}
+                  a
+                  {{ '%02d:%02d'|format(t.hora_fi.hour, t.hora_fi.minute) }}{{ ', ' if not loop.last }}
+                {% endfor %}
+              {% else %}—{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endif %}
+
+{% if assignacions|length > 1 %}
+<div class="targeta">
+  <h2>Historial</h2>
+  <ul class="llista-neta">
+    {% for a in assignacions %}
+    <li>
+      <strong>{{ a.patro.nom }}</strong> —
+      des del {{ a.data_inici.strftime('%d/%m/%Y') }}
+      {% if a.data_fi %}fins al {{ a.data_fi.strftime('%d/%m/%Y') }}
+      {% else %}<span class="etiqueta etiqueta-ok">vigent</span>{% endif %}
+      {% if a.coeficient != 100 %}<span class="etiqueta">{{ a.coeficient }} %</span>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+{% endblock %}

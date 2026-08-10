@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block titol %}Horaris{% endblock %}
+{% block css_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='css/configuracio.css') }}">{% endblock %}
+{% block contingut %}
+
+<h1>Patrons d'horari i assignacions</h1>
+<p class="accions">
+  <a class="btn btn-secundari" href="{{ url_for('configuracio.index') }}">← Configuració</a>
+</p>
+
+<div class="targeta">
+  <h2>Patrons</h2>
+  {% for p in patrons %}
+  <div class="patro">
+    <div class="pendent-cap">
+      <strong>{{ p.nom }}</strong>
+      <span class="etiqueta">{{ (totals[p.id] // 60) }} h {{ totals[p.id] % 60 }} min a la setmana</span>
+    </div>
+    {% if p.descripcio %}<p class="nota">{{ p.descripcio }}</p>{% endif %}
+    <ul class="llista-neta trams">
+      {% for dia in range(1, 8) %}
+        {% set trams = p.trams_del_dia(dia) %}
+        {% if trams %}
+        <li>{{ dies_setmana[dia - 1]|capitalize }}:
+          {% for t in trams %}
+            {{ '%02d:%02d'|format(t.hora_inici.hour, t.hora_inici.minute) }}–{{ '%02d:%02d'|format(t.hora_fi.hour, t.hora_fi.minute) }}{{ ', ' if not loop.last }}
+          {% endfor %}
+        </li>
+        {% endif %}
+      {% endfor %}
+    </ul>
+    <form method="post" action="{{ url_for('configuracio.patro') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="id" value="{{ p.id }}">
+      <button class="btn btn-perill" type="submit" name="accio" value="elimina">Esborra</button>
+    </form>
+  </div>
+  {% else %}
+    <p class="subtitol">Encara no hi ha cap patró. Crea'n un aquí sota.</p>
+  {% endfor %}
+</div>
+
+<div class="targeta">
+  <h2>Patró nou</h2>
+  <form method="post" action="{{ url_for('configuracio.patro') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="fila">
+      <p class="camp">
+        <label for="patro-nom">Nom</label>
+        <input id="patro-nom" name="nom" placeholder="Oficines hivern" required>
+      </p>
+      <p class="camp">
+        <label for="patro-desc">Descripció</label>
+        <input id="patro-desc" name="descripcio">
+      </p>
+    </div>
+
+    <table class="taula">
+      <caption>Deixa en blanc els dies que no es treballa.</caption>
+      <thead><tr><th scope="col">Dia</th><th scope="col">De</th>
+                 <th scope="col">A</th></tr></thead>
+      <tbody>
+        {% for dia in range(1, 8) %}
+        <tr>
+          <th scope="row">
+            {{ dies_setmana[dia - 1]|capitalize }}
+            <input type="hidden" name="dia" value="{{ dia }}">
+          </th>
+          <td><label class="visualment-amagat" for="ini-{{ dia }}">Hora d'inici</label>
+              <input id="ini-{{ dia }}" name="hora_inici" type="time"></td>
+          <td><label class="visualment-amagat" for="fi-{{ dia }}">Hora de fi</label>
+              <input id="fi-{{ dia }}" name="hora_fi" type="time"></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p class="accions"><button class="btn" type="submit">Crea el patró</button></p>
+  </form>
+</div>
+
+<div class="targeta">
+  <h2>Assignacions</h2>
+  {% for t in plantilla %}
+  <div class="patro">
+    <div class="pendent-cap">
+      <strong>{{ t.nom }}</strong>
+      <span class="etiqueta">{{ t.servei or 'sense servei' }}</span>
+    </div>
+    <ul class="llista-neta">
+      {% for a in assignacions[t.login] %}
+      <li>
+        {{ a.patro.nom }} — des del {{ a.data_inici.strftime('%d/%m/%Y') }}
+        {% if a.data_fi %}fins al {{ a.data_fi.strftime('%d/%m/%Y') }}
+        {% else %}<span class="etiqueta etiqueta-ok">vigent</span>{% endif %}
+        {% if a.coeficient != 100 %}<span class="etiqueta">{{ a.coeficient }} %</span>{% endif %}
+        <form method="post" action="{{ url_for('configuracio.assignacio') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="login" value="{{ t.login }}">
+          <input type="hidden" name="index" value="{{ loop.index0 }}">
+          <button class="btn btn-secundari" type="submit" name="accio" value="elimina">Treu</button>
+        </form>
+      </li>
+      {% else %}
+        <li class="nota">Sense horari assignat: les hores previstes li surten a zero.</li>
+      {% endfor %}
+    </ul>
+
+    <form method="post" action="{{ url_for('configuracio.assignacio') }}" class="fila-edicio">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="login" value="{{ t.login }}">
+      <label class="visualment-amagat" for="patro-{{ t.login }}">Patró</label>
+      <select id="patro-{{ t.login }}" name="patro" required>
+        {% for p in patrons %}<option value="{{ p.id }}">{{ p.nom }}</option>{% endfor %}
+      </select>
+      <label for="ini-{{ t.login }}">Des de</label>
+      <input id="ini-{{ t.login }}" name="data_inici" type="date" required>
+      <label for="fi-{{ t.login }}">Fins a</label>
+      <input id="fi-{{ t.login }}" name="data_fi" type="date">
+      <label for="coef-{{ t.login }}">% jornada</label>
+      <input id="coef-{{ t.login }}" name="coeficient" type="number" value="100"
+             min="1" max="100">
+      <button class="btn" type="submit">Assigna</button>
+    </form>
+  </div>
+  {% endfor %}
+</div>
+
+{% endblock %}

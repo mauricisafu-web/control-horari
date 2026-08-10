@@ -1,0 +1,40 @@
+/* configuracio.css — Manteniment. Densitat alta: la fa servir una sola persona. */
+
+.fila-edicio {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .5rem;
+  padding: .5rem 0; border-bottom: 1px solid var(--vora);
+}
+.fila-edicio:last-child { border-bottom: none; }
+.fila-edicio input, .fila-edicio select { width: auto; flex: 1 1 8rem; }
+.fila-edicio input[type="color"] { flex: 0 0 3rem; padding: .2rem; }
+.fila-edicio input.curt { flex: 0 0 5rem; }
+.fila-edicio label { font-size: .85rem; color: var(--text-fluix); }
+
+.patro, .compte {
+  border: 1px solid var(--vora); border-radius: var(--radi);
+  padding: .75rem; margin-bottom: .75rem;
+}
+.compte-baixa { opacity: .7; }
+
+.pendent-cap { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; }
+.codi { font-family: ui-monospace, "Cascadia Code", monospace;
+        font-size: .85rem; color: var(--text-fluix); }
+.nota { font-size: .85rem; color: var(--text-fluix); margin: .4rem 0; }
+.trams { font-size: .9rem; }
+
+details > summary {
+  cursor: pointer; min-height: 44px; display: flex; align-items: center;
+  color: var(--blau); font-size: .9rem;
+}
+
+.ambits { border: 1px solid var(--vora); border-radius: var(--radi);
+          padding: .5rem .75rem; margin: .5rem 0; }
+.ambits legend { font-size: .85rem; color: var(--text-fluix); padding: 0 .3rem; }
+.ambits label { display: flex; align-items: center; gap: .4rem;
+                min-height: 44px; }
+.ambits input[type="checkbox"] { width: auto; min-height: auto; }
+
+.visualment-amagat {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}

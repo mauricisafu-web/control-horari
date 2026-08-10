@@ -1,0 +1,48 @@
+/* calendari.css — Graella mensual, compartida per absències i gestió. */
+
+.cal-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: .5rem; margin-bottom: .75rem;
+}
+
+.cal { width: 100%; border-collapse: collapse; table-layout: fixed;
+       min-width: 20rem; }
+.cal th {
+  font-size: .72rem; text-transform: uppercase; letter-spacing: .03em;
+  color: var(--text-fluix); padding: .3rem 0; text-align: center;
+}
+.cal td {
+  border: 1px solid var(--vora); vertical-align: top; height: 4.2rem;
+  padding: .2rem; font-size: .72rem;
+}
+.cal-dia { display: block; font-weight: 600; font-size: .8rem;
+           color: var(--text-fluix); }
+
+.fora-del-mes { background: var(--fons); }
+.fora-del-mes .cal-dia { opacity: .45; }
+.cap-setmana { background: var(--fons); }
+.avui { outline: 2px solid var(--blau); outline-offset: -2px; }
+
+.cal-festiu {
+  display: block; margin-top: .1rem; padding: .05rem .2rem;
+  border-radius: 4px; background: var(--groc-fons); color: var(--groc);
+  font-weight: 600; overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cal-item {
+  display: block; margin-top: .1rem; padding: .05rem .2rem;
+  border-radius: 4px; background: var(--verd-fons); color: var(--verd);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* Les pendents es distingeixen pel color I per la vora ratllada: mai només
+   pel color. */
+.cal-pendent {
+  background: var(--groc-fons); color: var(--groc);
+  border: 1px dashed var(--groc);
+}
+
+.visualment-amagat {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}

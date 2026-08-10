@@ -74,7 +74,10 @@ def valida_marcatge(tipus: str, moment: datetime,
     valids = _valids(marcatges_del_dia)
     if valids:
         ultim = valids[-1]
-        if moment <= ultim.moment:
+        # ESTRICTAMENT anterior. Dos marcatges del mateix segon NO són un
+        # error de rellotge: `ara_utc()` trunca els microsegons, o sigui que
+        # el cas d'igualtat és el doble toc, i li toca el missatge de sota.
+        if moment < ultim.moment:
             raise ErrorHorari(
                 "Aquest fitxatge és anterior a l'últim que tens registrat.")
         # El cas que passarà de debò: el doble toc a la pantalla del mòbil.

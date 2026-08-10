@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block titol %}Absències{% endblock %}
+{% block css_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/calendari.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/absencies.css') }}">
+{% endblock %}
+{% block contingut %}
+
+<h1>Vacances i assumptes propis</h1>
+
+{# -- saldos ------------------------------------------------------------- #}
+<div class="saldos">
+  {% for s in saldos %}
+  <div class="targeta saldo">
+    <h2>{{ etiqueta_tipus[s.tipus] }}</h2>
+    <p class="disponibles {{ 'negatiu' if s.disponibles < 0 }}">
+      {{ s.disponibles }}<span class="unitat">dies</span></p>
+    <dl class="detall">
+      <div><dt>Et corresponen</dt><dd>{{ s.assignats }}</dd></div>
+      <div><dt>Gastats</dt><dd>{{ s.gastats }}</dd></div>
+      <div><dt>Pendents</dt><dd>{{ s.pendents }}</dd></div>
+    </dl>
+
+    {# Sense aquesta explicació, un saldo de 14 en lloc de 22 sembla un error
+       del programa. #}
+    {% if s.prorratejat %}
+      <p class="nota">Et corresponen {{ s.assignats }} dies (i no {{ s.anual }})
+        perquè aquest any la teva relació laboral n'ha durat {{ s.dies_relacio }}.</p>
+    {% endif %}
+    {% if s.disponibles < 0 %}
+      <p class="flash flash-avis">Has gaudit {{ -s.disponibles }} dies més dels
+        que et corresponen. Es regularitzaran a la liquidació.</p>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+
+{# -- sol·licitud -------------------------------------------------------- #}
+<div class="targeta">
+  <h2>Demana dies</h2>
+  <form method="post" action="{{ url_for('absencies.solicita') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="fila">
+      <p class="camp">
+        <label for="tipus">Tipus</label>
+        <select id="tipus" name="tipus" required>
+          {% for clau, text in tipus %}<option value="{{ clau }}">{{ text }}</option>{% endfor %}
+        </select>
+      </p>
+      <p class="camp">
+        <label for="inici">Del dia</label>
+        <input id="inici" name="inici" type="date" required
+               min="{{ avui.isoformat() }}">
+      </p>
+      <p class="camp">
+        <label for="fi">Al dia</label>
+        <input id="fi" name="fi" type="date" required min="{{ avui.isoformat() }}">
+      </p>
+    </div>
+    <p class="camp">
+      <label for="motiu">Comentari (opcional)</label>
+      <input id="motiu" name="motiu" maxlength="300">
+      <span class="ajuda">Es descompten només els dies hàbils: els caps de
+        setmana i els festius no compten.</span>
+    </p>
+    <p class="accions"><button class="btn" type="submit">Demana-ho</button></p>
+  </form>
+</div>
+
+{# -- les meves sol·licituds --------------------------------------------- #}
+<div class="targeta">
+  <h2>Les meves sol·licituds</h2>
+  {% if not meves %}
+    <p class="subtitol">Encara no n'has demanat cap.</p>
+  {% else %}
+  <div class="taula-envolt">
+    <table class="taula">
+      <thead>
+        <tr>
+          <th scope="col">Codi</th><th scope="col">Tipus</th>
+          <th scope="col">Dates</th><th scope="col" class="xifra">Dies</th>
+          <th scope="col">Estat</th><th scope="col"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in meves %}
+        <tr>
+          <th scope="row">{{ a.codi }}</th>
+          <td>{{ etiqueta_tipus[a.tipus] }}</td>
+          <td>{{ a.data_inici.strftime('%d/%m/%Y') }} –
+              {{ a.data_fi.strftime('%d/%m/%Y') }}</td>
+          <td class="xifra">{{ a.dies }}</td>
+          <td>
+            <span class="etiqueta
+              {{ 'etiqueta-ok' if a.estat == 'APROVADA'
+                 else 'etiqueta-pendent' if a.estat == 'PENDENT'
+                 else 'etiqueta-no' }}">{{ etiqueta_estat[a.estat] }}</span>
+            {% if a.motiu_resolucio %}
+              <span class="nota">{{ a.motiu_resolucio }}</span>{% endif %}
+          </td>
+          <td>
+            {% if a.estat == 'PENDENT' %}
+            <form method="post" action="{{ url_for('absencies.anula') }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="codi" value="{{ a.codi }}">
+              <button class="btn btn-secundari" type="submit">Anul·la</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+
+{# -- calendari personal -------------------------------------------------- #}
+<div class="targeta">
+  <h2>El meu calendari</h2>
+  <nav class="cal-nav" aria-label="Canvi de mes">
+    <a class="btn btn-secundari"
+       href="{{ url_for('absencies.index', any=graella.mes_anterior[0], mes=graella.mes_anterior[1]) }}">← Anterior</a>
+    <strong>{{ graella.nom_mes|capitalize }} de {{ graella.any }}</strong>
+    <a class="btn btn-secundari"
+       href="{{ url_for('absencies.index', any=graella.mes_seguent[0], mes=graella.mes_seguent[1]) }}">Següent →</a>
+  </nav>
+  {% include "_calendari.html" %}
+</div>
+
+{% endblock %}

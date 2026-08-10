@@ -1,0 +1,28 @@
+/* absencies.css — Saldos i sol·licituds. */
+
+.saldos { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+
+.saldo h2 { margin: 0; font-size: 1rem; }
+.saldo .disponibles {
+  margin: .2rem 0 .4rem; font-size: 2.6rem; font-weight: 600; line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.saldo .unitat {
+  font-size: .9rem; font-weight: 400; color: var(--text-fluix);
+  margin-left: .35rem;
+}
+
+.saldo .detall {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: .4rem;
+  margin: 0; padding-top: .5rem; border-top: 1px solid var(--vora);
+}
+.saldo .detall > div { text-align: center; }
+.saldo dt { font-size: .7rem; text-transform: uppercase;
+            letter-spacing: .03em; color: var(--text-fluix); }
+.saldo dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.nota { font-size: .82rem; color: var(--text-fluix); margin: .6rem 0 0; }
+
+@media (min-width: 640px) {
+  .saldos { grid-template-columns: 1fr 1fr; }
+}
