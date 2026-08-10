@@ -1,0 +1,3 @@
+# Aplicació interna de l'ajuntament: no hi ha res per indexar.
+User-agent: *
+Disallow: /

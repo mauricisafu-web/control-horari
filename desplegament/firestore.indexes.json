@@ -1,0 +1,71 @@
+{
+  "//": "Índexs compostos. Sense aquests, les consultes passen les proves (que corren contra l'adaptador de memòria, que no necessita índexs) i FALLEN en producció. És el parany estructural d'aquest projecte. Cada entrada correspon a una consulta real de magatzem/; si algú n'afegeix una de nova amb més d'un filtre, o amb filtre més ordenació, l'ha d'afegir aquí.",
+
+  "indexes": [
+    {
+      "//": "marcatges.del_dia i .del_periode",
+      "collectionGroup": "marcatges",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "treballador_id", "order": "ASCENDING" },
+        { "fieldPath": "data", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "//": "marcatges.del_periode_serveis",
+      "collectionGroup": "marcatges",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "servei_id", "order": "ASCENDING" },
+        { "fieldPath": "data", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "//": "marcatges.pendents_validacio",
+      "collectionGroup": "marcatges",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "servei_id", "order": "ASCENDING" },
+        { "fieldPath": "estat", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "//": "absencies.pendents i .aprovades_en filtrades per servei",
+      "collectionGroup": "absencies",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "servei_id", "order": "ASCENDING" },
+        { "fieldPath": "estat", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "//": "comptes.llista amb filtre de servei",
+      "collectionGroup": "treballadors",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "actiu", "order": "ASCENDING" },
+        { "fieldPath": "servei_id", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "//": "activitat.consulta per usuari, ordenada per instant",
+      "collectionGroup": "activitat",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "usuari", "order": "ASCENDING" },
+        { "fieldPath": "quan", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "//": "activitat.consulta per data, ordenada per instant",
+      "collectionGroup": "activitat",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "data", "order": "ASCENDING" },
+        { "fieldPath": "quan", "order": "DESCENDING" }
+      ]
+    }
+  ],
+
+  "fieldOverrides": []
+}

@@ -1,95 +1,95 @@
 # ESTAT.md — Taulell de progrés
 
-> L'actualitza **només qui integra**, al final de cada tasca. Els agents no
-> l'escriuen: ells escriuen `incidencies/<ID>.md`.
-
-**Versió del contracte**: 1.0 · **Última actualització**: 2026-08-05
+**Versió del contracte**: 1.0 · **Última actualització**: 2026-08-10
 
 ---
 
 ## Resum
 
-| Onada | Estat | Tasques |
+| Onada | Estat | Què hi ha |
 |---|---|---|
-| Preparació (cervell) | ✅ **FETA** | Contracte, esquema, fixtures i encàrrecs |
-| 0 · Esquelet | ⬜ pendent | 0A |
-| 1 · Domini i magatzem | ⬜ pendent | 1A 1B 1C 1D 1E |
-| 2 · Transversals | ⬜ pendent | 2A 2B 2C 2D |
-| 3 · Web dels mòduls | ⬜ pendent | 3A 3B 3C 3D 3E |
-| 4 · Tancament | ⬜ pendent | 4A 4B 4C 4D |
-| 5 · Desplegament real | ⬜ pendent | 5A 5B 5C |
+| Preparació | ✅ **FETA** | Contracte, port de magatzem, fixtures, 20 encàrrecs |
+| 0 · Esquelet | ✅ **FETA** | Fàbrica, seguretat, blueprints, base.html, PWA |
+| 1 · Domini i magatzem | ✅ **FETA** | `core/` sencer i `magatzem/` sencer |
+| 2 · Auth, TOTP, PWA, correus | ✅ **FETA** | Entrada amb segon factor, icones, notificacions |
+| 3 · Pantalles | ✅ **FETA** | Fitxatge, hores, absències, gestió, configuració |
+| 4 · Informes i purga | ✅ **FETA** | CSV i PDF del registre, purga amb salvaguardes |
+| 5 · Desplegament | 🟨 **PREPARAT** | Artefactes fets i provats en local. **Bloquejat pel compte de Google** |
 
-Llegenda: ⬜ pendent · 🟨 en curs · ✅ feta · ⛔ bloquejada
-
----
-
-## Detall
-
-| ID | Tasca | Estat | Agent | Data | Notes |
-|---|---|---|---|---|---|
-| 0A | Esquelet executable | ⬜ | | | |
-| 1A | Magatzem | ⬜ | | | camí crític |
-| 1B | Còmput horari | ⬜ | | | |
-| 1C | Fitxatge (domini) | ⬜ | | | |
-| 1D | Absències (domini) | ⬜ | | | |
-| 1E | Calendari i festius | ⬜ | | | |
-| 2A | Autenticació i TOTP | ⬜ | | | desbloqueja l'onada 3 |
-| 2B | PWA | ⬜ | | | |
-| 2C | Desplegament (Docker) | ⬜ | | | |
-| 2D | Correus i eines | ⬜ | | | |
-| 3A | Web fitxatge | ⬜ | | | pantalla principal |
-| 3B | Web hores | ⬜ | | | |
-| 3C | Web absències | ⬜ | | | |
-| 3D | Web gestió | ⬜ | | | més control d'accés |
-| 3E | Web configuració | ⬜ | | | |
-| 4A | Informes i purga | ⬜ | | | |
-| 4B | UI i accessibilitat | ⬜ | | | va sola |
-| 4C | Auditoria de seguretat | ⬜ | | | |
-| 4D | Compliment RGPD | ⬜ | | | es pot avançar al dia 1 |
-| 5A | Prova Docker local | ⬜ | | | |
-| 5B | Desplegament a Firebase | ⬜ | | | |
-| 5C | Posada en marxa | ⬜ | | | |
+**330 proves verdes.** `core/` no importa Flask ni res de Google, i cap API de
+Google apareix fora de `magatzem/rebost_firestore.py`.
 
 ---
 
-## Ja fet a la preparació
+## Verificat funcionant (extrem a extrem, amb dades sintètiques)
 
-Escrit i **verificat executant-lo** (esquema idempotent, claus foranes
-actives, índex d'àmbit únic, conversió UTC↔local correcta):
+- Entrada amb contrasenya i **segon factor** (admins i responsables).
+- **Cicle de fitxatge sencer**: entrada → pausa → represa → sortida, amb l'estat
+  correcte a cada pas i el rebut de l'hora exacta.
+- Antidoble-toc: dos tocs seguits no creen dos marcatges.
+- Correcció de marcatge propi → queda **pendent de validar**; el responsable la
+  valida o la rebutja, i **rebutjar-la restaura l'original**.
+- Sol·licitud de vacances amb saldo, solapaments i prorrateig explicats;
+  aprovació per un responsable del servei; el dia surt cobert al resum d'hores.
+- **Ningú resol la seva pròpia sol·licitud**, ni sent administrador.
+- Un administrador pot muntar l'aplicació de zero sense sortir del navegador.
+- Informes en **CSV** (amb BOM, s'obre bé a l'Excel) i en **PDF**.
+- Purga amb simulació i amb la salvaguarda dels dos últims anys.
+- Totes les pantalles responen; la matriu de permisos es genera del `url_map`.
 
-- `CLAUDE.md` · `DISSENY.md` · `FLUX_DE_TREBALL.md` · `ESTAT.md`
-- `core/model.py` **(congelat)**
-- `magatzem/rebost.py` **(congelat)** — el port de 8 operacions + adaptador
-  de memòria
-- `magatzem/rebost_firestore.py` **(congelat)** — adaptador de producció
-- `tests/conftest.py` **(congelat)**
-- `requirements.txt` · `pytest.ini` · `.gitignore`
-- `desplegament/FIREBASE.md`
-- Els 20 fitxers d'`encarrecs/`
+## Errors reals trobats i corregits durant la construcció
 
-Verificat executant-ho: els dos adaptadors tenen la **mateixa superfície
-exacta** (8 operacions), les lectures retornen còpies aïllades, un `lot()` que
-falla no escriu res, el comptador és atòmic i la conversió UTC↔local és
-correcta.
+| On | Què |
+|---|---|
+| `zoneinfo` | Ni Windows ni `python:slim` porten la base de zones: `tzdata` és dependència obligatòria |
+| `web/auth.py` | El comptador d'intents era una variable de mòdul, compartida per totes les instàncies |
+| `_calendari.html` | Jinja resolia `casella.items` com el **mètode** del diccionari, no la clau |
+| `web/informes.py` | Li faltava el decorador d'administrador |
+| `core/fitxatge.py` | Dos marcatges del mateix segon donaven «és anterior» en lloc del missatge del doble toc |
+| `web/configuracio.py` | Una variable anomenada `any` tapava la funció incorporada a tota la funció |
+| `core/purga.py` | La salvaguarda s'ancorava a la data que li passen, no a la real: no protegia de res |
+| `eines/dades_prova.py` | Generava marcatges d'avui a les 15:00 (futur): no es podia fitxar a la demostració |
 
 ---
 
-## Tràmits externs (no depenen del codi — començar el dia 1)
+## El que falta, i qui ho ha de fer
 
-| # | Tràmit | Responsable | Estat |
-|---|---|---|---|
-| T1 | Projecte de Firebase amb pla Blaze i regió de la UE | Usuari | ⬜ |
-| T2 | **Alerta de pressupost a 1 €** i quotes de peticions | Usuari | ⬜ |
-| T3 | DPA de Google Cloud acceptat | Usuari + DPD | ⬜ |
-| T4 | Vistiplau del DPD (documents de l'agent 4D) | DPD | ⬜ |
-| T5 | Confirmar la normativa local de registre de jornada per a personal funcionari i si cal informar-ne la representació del personal | Usuari | ⬜ |
-| T6 | Node.js, Java i `gcloud` instal·lats (cap dels tres hi és ara) | Usuari | ⬜ |
+### Bloquejat: compte de Google (ho ha de fer l'usuari)
 
-**T3, T4 i T5 bloquegen les dades reals, no el desenvolupament.** Tot es
-construeix i es prova amb dades sintètiques.
+Crear un compte, activar el pla Blaze amb una targeta i autenticar-s'hi són
+accions de compte i de pagament. Els passos exactes són a
+`desplegament/DESPLEGAMENT.md`.
 
-**T1, T2 i T6 no calen fins a l'onada 5**: fins llavors tot corre contra
-l'adaptador de memòria, sense cap compte ni cap eina externa.
+| # | Tràmit | Qui |
+|---|---|---|
+| T1 | Projecte de Firebase, pla Blaze, Firestore a `eur3` o `europe-west1` | Usuari |
+| T2 | **Alerta de pressupost a 1 €** — el primer de tot | Usuari |
+| T3 | Instal·lar `firebase-tools`, `gcloud` i Java | Usuari |
+
+Un cop fet, el desplegament és seguir `DESPLEGAMENT.md` de dalt a baix.
+
+### Pendent de decisió de l'usuari (pilot sense DPD)
+
+L'usuari ha decidit fer un **pilot sense passar pel DPD**. Això no elimina el
+tràmit, el posposa:
+
+- [ ] Documentació de compliment (RAT, anàlisi de riscos, nota informativa a
+      la plantilla). Hi ha l'encàrrec preparat a `encarrecs/4D-compliment-rgpd.md`.
+- [ ] Omplir els camps entre claudàtors de `templates/avis_legal.html`
+      (ajuntament, adreça, contacte, DPD).
+- [ ] Acceptar el DPA de Google Cloud.
+- [ ] Confirmar la normativa local de registre de jornada per a personal
+      funcionari i si cal informar-ne la representació del personal.
+
+**Mentre no es faci: dades sintètiques.** El dia que un treballador real
+fitxi, hi ha un tractament de dades personals de ple dret.
+
+### Millores que no s'han fet (decisions conscients)
+
+- Repàs d'accessibilitat i coherència visual (`encarrecs/4B`).
+- Auditoria de seguretat independent (`encarrecs/4C`).
+- Proves d'integració contra l'emulador de Firestore: escrites com a plantilla,
+  però **no executades** (cal Node i Java). És una porta abans de desplegar.
 
 ---
 
@@ -97,14 +97,15 @@ l'adaptador de memòria, sense cap compte ni cap eina externa.
 
 | Data | Decisió |
 |---|---|
-| 2026-08-05 | Abast: **fitxatge + horari teòric + saldo**, més vacances i festius |
-| 2026-08-05 | Aplicació **TOTALMENT independent**: cap fitxer, compte, magatzem ni configuració compartits amb cap altra aplicació de l'usuari |
+| 2026-08-05 | Abast: fitxatge + horari teòric + saldo, més vacances i festius |
+| 2026-08-05 | Aplicació **totalment independent** de qualsevol altra |
 | 2026-08-05 | Allotjament: **Firebase** (Hosting + Cloud Run) |
-| 2026-08-05 | **Cost zero, requisit dur.** Escalat a zero (`min-instances 0`) i pressupost de lectures a `DISSENY.md` §3.5 |
-| 2026-08-05 | **El NAS queda descartat** i no es contempla en cap escenari |
-| 2026-08-05 | Persistència: **Firestore** darrere d'un port intercanviable. SQLite es va descartar perquè amb cost zero obliga a escalar a zero i obre una finestra de pèrdua de marcatges |
-| 2026-08-05 | Proves contra un adaptador **en memòria**: cap agent necessita Node, Java, emulador ni compte de Google per treballar |
-| 2026-08-05 | Sense quadrants de torns, sense fitxatge fora de línia, sense geolocalització ni biometria, sense permisos de l'art. 9 |
+| 2026-08-05 | **Cost zero**: escalat a zero i pressupost de lectures |
+| 2026-08-05 | **El NAS queda descartat** |
+| 2026-08-05 | Persistència: **Firestore** darrere d'un port intercanviable |
+| 2026-08-05 | Proves contra un adaptador **en memòria**: cap eina externa per treballar |
+| 2026-08-10 | **Pilot sense DPD**, per decisió de l'usuari. Dades sintètiques fins que es tramiti |
+| 2026-08-10 | Construcció feta per Opus en una sola sessió, no repartida entre agents |
 
 ---
 
@@ -112,4 +113,5 @@ l'adaptador de memòria, sense cap compte ni cap eina externa.
 
 | Data | Versió | On | Verificat per | Notes |
 |---|---|---|---|---|
-| | | | | |
+| 2026-08-10 | `main` | local (Docker i `python app_web.py`) | Opus | Recorregut sencer amb dades sintètiques |
+| | | Firebase | | pendent del compte de Google |

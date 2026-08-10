@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block titol %}Informes{% endblock %}
+{% block contingut %}
+
+<h1>Registre de jornada</h1>
+<p class="subtitol">L'article 34.9 de l'Estatut dels treballadors obliga a
+   tenir el registre a disposició de la plantilla, dels seus representants i
+   de la Inspecció de Treball.</p>
+
+<div class="targeta">
+  <form method="post" action="{{ url_for('informes.genera') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="fila">
+      <p class="camp">
+        <label for="treballador">Treballador</label>
+        <select id="treballador" name="treballador">
+          <option value="">Tota la plantilla</option>
+          {% for t in plantilla %}
+            <option value="{{ t.login }}">{{ t.nom }}{{ ' (de baixa)' if not t.actiu }}</option>
+          {% endfor %}
+        </select>
+      </p>
+      <p class="camp">
+        <label for="inici">Des del</label>
+        <input id="inici" name="inici" type="date" value="{{ inici.isoformat() }}" required>
+      </p>
+      <p class="camp">
+        <label for="fi">Fins al</label>
+        <input id="fi" name="fi" type="date" value="{{ fi.isoformat() }}" required>
+      </p>
+      <p class="camp">
+        <label for="format">Format</label>
+        <select id="format" name="format">
+          <option value="csv">CSV (full de càlcul)</option>
+          <option value="pdf">PDF (per presentar)</option>
+        </select>
+      </p>
+    </div>
+    <p class="accions"><button class="btn" type="submit">Genera l'informe</button></p>
+  </form>
+
+  <p class="ajuda">
+    Límits: com a màxim {{ maxim_tothom }} dies si demanes tota la plantilla,
+    o {{ maxim_una }} dies si demanes una sola persona. No és una limitació
+    tècnica arbitrària: cada document llegit compta contra la quota gratuïta
+    diària del magatzem, i aquests límits són el que manté l'aplicació a
+    cost zero.
+  </p>
+</div>
+
+<div class="targeta">
+  <h2>Què conté</h2>
+  <ul>
+    <li><strong>CSV</strong>: una fila per marcatge, amb l'hora exacta,
+        l'origen, l'estat i qui el va registrar. També hi surten els marcatges
+        anul·lats i els rebutjats, marcats com a tals: el llibre no s'esborra
+        mai i la traça ha de ser completa.</li>
+    <li><strong>PDF</strong>: un full per treballador amb el detall dia a dia
+        i els totals del període. És el document que es porta a una
+        inspecció.</li>
+  </ul>
+  <p class="subtitol">Cap dels dos conté NIF, adreça ni correu: només nom,
+     servei i hores.</p>
+</div>
+
+{% endblock %}

@@ -123,8 +123,11 @@ def pobla(mag, nombre_treballadors: int = 24, mesos: int = 3,
     # Marcatges dels últims mesos, amb variació realista.
     from magatzem import marcatges as mag_marcatges
     nombre_marcatges = 0
+    # Fins AHIR, no fins avui: si es generessin els marcatges d'avui (amb la
+    # sortida a les 15:00), qui obris la demostracio al mati es trobaria que
+    # ja ha plegat i no podria fitxar res.
     dia = avui - timedelta(days=30 * mesos)
-    while dia <= avui:
+    while dia < avui:
         if dia.weekday() < 5 and dia not in festius_any:
             for login, servei_id, _ in plantilla:
                 if atzar.random() < 0.06:

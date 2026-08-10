@@ -1,0 +1,37 @@
+# Prova en local, abans de tocar res de Google.
+#
+# Per defecte fa servir el magatzem EN MEMÒRIA amb dades sintètiques: no cal
+# cap compte, cap targeta i cap connexió. És el que permet ensenyar
+# l'aplicació funcionant sense haver contractat res.
+#
+#     docker compose -f desplegament/docker-compose.yml up --build
+#     http://localhost:8080     admin01 / Prova-1234
+#
+# Aquesta aplicació NO desa res al disc: tot l'estat viu al magatzem. Si et
+# veus muntant un volum de dades, alguna cosa no quadra amb el disseny.
+
+services:
+  control-horari:
+    build:
+      context: ..
+      dockerfile: desplegament/Dockerfile
+    image: control-horari
+    ports:
+      - "8080:8080"
+    environment:
+      TZ: Europe/Madrid
+      PORT: "8080"
+      # En local, memòria i dades sintètiques. A producció, `firestore`.
+      REBOST: memoria
+      DADES_PROVA: "1"
+      # Sense HTTPS en local: si no, el navegador no enviaria la cookie.
+      COOKIE_SECURE: "0"
+      DARRERE_PROXY: "0"
+      SECRET_KEY: nomes-per-a-la-prova-local-no-real
+      SESSIO_MINUTS: "60"
+
+    # Variant per provar contra l'emulador de Firestore (onada 5A, quan
+    # s'hagin instal·lat Node i Java):
+    #   REBOST: firestore
+    #   FIRESTORE_EMULATOR_HOST: host.docker.internal:8081
+    #   PROJECTE_FIREBASE: control-horari-prova

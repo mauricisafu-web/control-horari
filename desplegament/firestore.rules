@@ -1,0 +1,19 @@
+rules_version = '2';
+
+// DENEGA-HO TOT, a propòsit.
+//
+// L'aplicació hi entra amb l'SDK d'administrador des del servidor, que se
+// salta aquestes regles. CAP navegador parla mai amb Firestore directament:
+// tota l'autorització (qui aprova què, qui veu què) viu a `web/`, al
+// servidor, on es pot provar.
+//
+// Aquestes regles hi són perquè, si algun dia es filtrés una clau de client
+// o algú connectés un SDK de navegador per error, no servís absolutament de
+// res. És la xarxa de seguretat, no el mecanisme principal.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

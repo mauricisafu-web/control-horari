@@ -1,0 +1,19 @@
+{
+  "hosting": {
+    "public": "public",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "rewrites": [
+      {
+        "source": "**",
+        "run": {
+          "serviceId": "control-horari",
+          "region": "europe-west1"
+        }
+      }
+    ]
+  },
+  "firestore": {
+    "rules": "desplegament/firestore.rules",
+    "indexes": "desplegament/firestore.indexes.json"
+  }
+}

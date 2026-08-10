@@ -65,6 +65,11 @@ def crea_app(config_extra: dict | None = None, magatzem=None) -> Flask:
         from eines.dades_prova import pobla
         pobla(mag)
 
+    # Purga per conservacio. Ve DESACTIVADA per defecte: esborrar un llibre
+    # de registre legalment exigible ha de ser una decisio conscient.
+    from core import purga
+    purga.executa_si_toca(mag, conf)
+
     app.extensions["magatzem"] = mag
 
     @app.before_request

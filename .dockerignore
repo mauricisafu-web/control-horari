@@ -1,0 +1,48 @@
+# El context de construcció és la carpeta sencera. Sense aquest fitxer, un
+# `COPY . /app` ficaria secrets i dades de prova dins de la imatge.
+
+# Secrets i configuració local — MAI dins de la imatge
+.secret_key
+config.ini
+.env
+*.pem
+*.key
+credencials*.json
+serviceaccount*.json
+.firebaserc
+
+# Dades
+*.db
+*.db-wal
+*.db-shm
+dades/
+dades_prova/
+copies/
+logs/
+*.log
+
+# Desenvolupament
+.git/
+.gitignore
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+tests/
+.vscode/
+.idea/
+
+# Documentació de treball: no cal a producció
+encarrecs/
+incidencies/
+ESTAT.md
+FLUX_DE_TREBALL.md
+DISSENY.md
+*.md.bak
+
+# Firebase (es desplega a part, no va dins del contenidor)
+.firebase/
+public/
+firebase.json
+firebase-debug.log

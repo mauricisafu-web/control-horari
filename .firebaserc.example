@@ -1,0 +1,6 @@
+{
+  "//": "Copia'l a .firebaserc (que està al .gitignore) i posa-hi l'identificador real del teu projecte de Firebase.",
+  "projects": {
+    "default": "EL-TEU-PROJECTE"
+  }
+}
