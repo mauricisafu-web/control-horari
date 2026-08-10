@@ -1,0 +1,40 @@
+# Dades reals i base de dades — MAI al control de versions
+*.db
+*.db-wal
+*.db-shm
+*.db.lock
+control_horari.db*
+dades/
+copies/
+
+# Secrets i configuració local
+.secret_key
+config.ini
+.env
+*.pem
+*.key
+credencials*.json
+serviceaccount*.json
+
+# Registres
+logs/
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+
+# Sistema i editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Firebase / Google Cloud
+.firebase/
+firebase-debug.log
+.firebaserc.local
