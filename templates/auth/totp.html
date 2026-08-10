@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block titol %}Verificació en dos passos{% endblock %}
+{% block css_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">{% endblock %}
+{% block contingut %}
+
+{% if codis_nous %}
+<div class="targeta">
+  <h1>Guarda aquests codis</h1>
+  <p class="flash flash-avis">Aquests codis <strong>no es tornaran a mostrar
+     mai més</strong>. Apunta-te'ls en un paper i guarda'l en un lloc segur.
+     Cadascun serveix una sola vegada i et permet entrar si perds el mòbil.</p>
+  <ul class="codis">
+    {% for codi in codis_nous %}<li>{{ codi }}</li>{% endfor %}
+  </ul>
+  <p class="accions">
+    <a class="btn" href="{{ url_for('fitxatge.inici') }}">Ja els tinc apuntats</a>
+  </p>
+</div>
+
+{% elif actiu %}
+<div class="targeta">
+  <h1>Verificació en dos passos</h1>
+  <p><span class="etiqueta etiqueta-ok">Activada</span></p>
+  <p class="subtitol">Et queden {{ queden }} codis de recuperació sense fer servir.</p>
+  <form method="post" action="{{ url_for('auth.totp_regenera_codis') }}" class="accions">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-secundari" type="submit">Genera codis nous</button>
+  </form>
+  {% if current_user.rol == 'treballador' %}
+  <form method="post" action="{{ url_for('auth.totp_desactiva') }}" class="accions">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-secundari" type="submit">Desactiva-la</button>
+  </form>
+  {% endif %}
+</div>
+
+{% else %}
+<div class="targeta">
+  <h1>Activa la verificació en dos passos</h1>
+  {% if obligatori %}
+    <p class="flash flash-avis">El teu rol veu dades d'altres persones, i per
+       això aquest pas és obligatori.</p>
+  {% endif %}
+  <ol>
+    <li>Instal·la al mòbil una aplicació de codis: Google Authenticator,
+        FreeOTP o Aegis.</li>
+    <li>Escaneja aquest codi QR.</li>
+    <li>Escriu aquí el codi de sis xifres que et surti.</li>
+  </ol>
+  <div class="qr">{{ qr|safe }}</div>
+  <p class="ajuda">Si no pots escanejar-lo, escriu aquesta clau a mà:<br>
+     <code class="secret">{{ secret }}</code></p>
+  <form method="post" action="{{ url_for('auth.totp_confirma') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <p class="camp">
+      <label for="codi">Codi de sis xifres</label>
+      <input id="codi" name="codi" inputmode="numeric" required class="codi">
+    </p>
+    <p class="accions"><button class="btn" type="submit">Activa-la</button></p>
+  </form>
+</div>
+{% endif %}
+
+{% endblock %}

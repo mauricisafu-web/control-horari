@@ -1,0 +1,36 @@
+/* auth.css — Pantalles d'entrada: centrades i sense distraccions. */
+
+.entrada { max-width: 24rem; margin: 2rem auto; }
+.entrada h1 { text-align: center; }
+.entrada > .subtitol { text-align: center; }
+.entrada .ajuda { text-align: center; font-size: .85rem; margin: .75rem 0 0; }
+
+.codi {
+  font-size: 1.6rem; letter-spacing: .35em; text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.qr { display: flex; justify-content: center; margin: 1rem 0; }
+/* Fons blanc sempre: en mode fosc, un QR invertit no l'escaneja cap mòbil. */
+.qr svg {
+  width: 12rem; height: 12rem; background: #fff; padding: .5rem;
+  border-radius: var(--radi);
+}
+
+.secret {
+  display: inline-block; font-family: ui-monospace, "Cascadia Code", monospace;
+  font-size: .95rem; letter-spacing: .08em; word-break: break-all;
+  background: var(--fons); border: 1px solid var(--vora);
+  border-radius: var(--radi); padding: .35rem .5rem;
+}
+
+.codis {
+  list-style: none; padding: 0; margin: 1rem 0;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: .4rem;
+}
+.codis li {
+  font-family: ui-monospace, "Cascadia Code", monospace; font-size: 1rem;
+  text-align: center; padding: .5rem; background: var(--fons);
+  border: 1px solid var(--vora); border-radius: var(--radi);
+}

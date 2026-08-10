@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block titol %}Recupera la contrasenya{% endblock %}
+{% block css_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">{% endblock %}
+{% block contingut %}
+<div class="entrada">
+  <h1>Recupera la contrasenya</h1>
+  <p class="subtitol">T'enviarem un enllaç al correu que tinguis registrat.</p>
+  <form method="post" class="targeta">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <p class="camp">
+      <label for="correu">Adreça electrònica</label>
+      <input id="correu" name="correu" type="email" autocomplete="email"
+             autofocus required>
+    </p>
+    <p class="accions"><button class="btn" type="submit">Envia l'enllaç</button></p>
+    <p class="ajuda"><a href="{{ url_for('auth.login') }}">Torna a l'entrada</a></p>
+  </form>
+</div>
+{% endblock %}

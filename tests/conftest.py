@@ -31,6 +31,12 @@ from magatzem import rebost as reb  # noqa: E402
 # Contrasenya de tots els comptes de prova. Sintètica i pública a propòsit.
 CONTRASENYA_PROVA = "Prova-1234"
 
+# Secret TOTP de prova, conegut i públic. Els comptes que veuen dades d'altres
+# persones (admin i responsables) el porten activat, perquè les proves passin
+# pel MATEIX camí que la producció: amb segon factor.
+SECRET_TOTP = "JBSWY3DPEHPK3PXP"
+AMB_TOTP = ("admin01", "resp01", "resp02")
+
 # (login, nom, correu, rol, servei)
 COMPTES = (
     ("admin01", "Admin de Prova", "admin01@exemple.cat", "admin", "Oficines"),
@@ -79,7 +85,8 @@ def _pobla(magatzem) -> None:
             "servei_id": ids_servei[servei],
             "data_alta": f"{any_actual - 3}-01-01", "data_baixa": None,
             "actiu": True, "canvi_pendent": False,
-            "totp_secret": None, "totp_actiu": False,
+            "totp_secret": SECRET_TOTP if login in AMB_TOTP else None,
+            "totp_actiu": login in AMB_TOTP,
             "creat_el": ara, "ultim_acces": None,
             "ambits": [ids_servei[s] for s in AMBITS.get(login, [])],
             "assignacions": [{"patro_id": patro_id,
@@ -162,6 +169,12 @@ def entra(client):
         resposta = client.post("/login",
                                data={"usuari": login, "contrasenya": contrasenya},
                                follow_redirects=True)
+        # Els comptes amb segon factor encara no han entrat: falta el codi.
+        if "Verificació en dos passos" in resposta.get_data(as_text=True):
+            import pyotp
+            resposta = client.post(
+                "/login/totp", data={"codi": pyotp.TOTP(SECRET_TOTP).now()},
+                follow_redirects=True)
         assert resposta.status_code == 200, f"No s'ha pogut entrar com a {login}"
         return resposta
     return _entra

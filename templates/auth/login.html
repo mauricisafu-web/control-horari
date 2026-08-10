@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block titol %}Entrada{% endblock %}
+{% block css_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">{% endblock %}
+{% block contingut %}
+<div class="entrada">
+  <h1>Control horari</h1>
+  <p class="subtitol">Ajuntament de la Torre de l'Espanyol</p>
+
+  <form method="post" class="targeta">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="next" value="{{ request.args.get('next', '') }}">
+    <p class="camp">
+      <label for="usuari">Usuari</label>
+      <input id="usuari" name="usuari" autocomplete="username"
+             autocapitalize="none" autofocus required>
+    </p>
+    <p class="camp">
+      <label for="contrasenya">Contrasenya</label>
+      <input id="contrasenya" name="contrasenya" type="password"
+             autocomplete="current-password" required>
+    </p>
+    <p class="accions">
+      <button class="btn btn-gran" type="submit">Entra</button>
+    </p>
+    <p class="ajuda">
+      <a href="{{ url_for('auth.recupera') }}">He oblidat la contrasenya</a>
+    </p>
+  </form>
+</div>
+{% endblock %}

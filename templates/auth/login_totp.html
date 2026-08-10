@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block titol %}Verificació{% endblock %}
+{% block css_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">{% endblock %}
+{% block contingut %}
+<div class="entrada">
+  <h1>Verificació en dos passos</h1>
+  <p class="subtitol">Escriu el codi de sis xifres de l'aplicació del mòbil.</p>
+
+  <form method="post" class="targeta">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <p class="camp">
+      <label for="codi">Codi</label>
+      <input id="codi" name="codi" inputmode="numeric" autocomplete="one-time-code"
+             autofocus required class="codi">
+      <span class="ajuda">També hi pots posar un dels codis de recuperació.</span>
+    </p>
+    <p class="accions">
+      <button class="btn btn-gran" type="submit">Comprova</button>
+    </p>
+    <p class="ajuda"><a href="{{ url_for('auth.login') }}">Torna a començar</a></p>
+  </form>
+</div>
+{% endblock %}
