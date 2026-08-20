@@ -168,12 +168,22 @@ def test_un_responsable_no_pot_desactivar_el_segon_factor(client, entra):
 
 # -- recuperació ------------------------------------------------------------
 def test_la_recuperacio_no_revela_si_el_correu_existeix(client):
+    import re
+
+    def sense_csrf(resposta):
+        """El testimoni CSRF porta una marca de temps a dins, o sigui que
+        canvia entre dues peticions de segons diferents. No diu res de si el
+        compte existeix: es normalitza per no comparar soroll."""
+        return re.sub(r'name="csrf_token" value="[^"]+"', "CSRF",
+                      text(resposta))
+
     coneguda = client.post("/recupera", data={"correu": "treb01@exemple.cat"},
                            follow_redirects=True)
     desconeguda = client.post("/recupera", data={"correu": "ningu@exemple.cat"},
                               follow_redirects=True)
     assert "Si aquest correu té compte" in text(coneguda)
-    assert text(coneguda) == text(desconeguda)
+    assert coneguda.status_code == desconeguda.status_code
+    assert sense_csrf(coneguda) == sense_csrf(desconeguda)
 
 
 def test_recuperacio_amb_token_bo(client, app, magatzem):
