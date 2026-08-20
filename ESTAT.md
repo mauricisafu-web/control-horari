@@ -1,6 +1,6 @@
 # ESTAT.md — Taulell de progrés
 
-**Versió del contracte**: 1.0 · **Última actualització**: 2026-08-10
+**Versió del contracte**: 1.0 · **Última actualització**: 2026-08-20
 
 ---
 
@@ -14,7 +14,7 @@
 | 2 · Auth, TOTP, PWA, correus | ✅ **FETA** | Entrada amb segon factor, icones, notificacions |
 | 3 · Pantalles | ✅ **FETA** | Fitxatge, hores, absències, gestió, configuració |
 | 4 · Informes i purga | ✅ **FETA** | CSV i PDF del registre, purga amb salvaguardes |
-| 5 · Desplegament | 🟨 **PREPARAT** | Artefactes fets i provats en local. **Bloquejat pel compte de Google** |
+| 5 · Desplegament | ✅ **DESPLEGAT** | En producció a Firebase Hosting + Cloud Run + Firestore (`eur3`) |
 
 **330 proves verdes.** `core/` no importa Flask ni res de Google, i cap API de
 Google apareix fora de `magatzem/rebost_firestore.py`.
@@ -54,35 +54,54 @@ Google apareix fora de `magatzem/rebost_firestore.py`.
 
 ## El que falta, i qui ho ha de fer
 
-### Bloquejat: compte de Google (ho ha de fer l'usuari)
+### Fet: desplegament real (2026-08-20)
 
-Crear un compte, activar el pla Blaze amb una targeta i autenticar-s'hi són
-accions de compte i de pagament. Els passos exactes són a
-`desplegament/DESPLEGAMENT.md`.
-
-| # | Tràmit | Qui |
+| # | Tràmit | Estat |
 |---|---|---|
-| T1 | Projecte de Firebase, pla Blaze, Firestore a `eur3` o `europe-west1` | Usuari |
-| T2 | **Alerta de pressupost a 1 €** — el primer de tot | Usuari |
-| T3 | Instal·lar `firebase-tools`, `gcloud` i Java | Usuari |
+| T1 | Projecte de Firebase (`control-horari-torre-espanyol`), pla Blaze | Fet |
+| T2 | Alerta de pressupost a 1 € | Feta per l'usuari a la consola |
+| T3 | `gcloud`, `firebase-tools`, Node, Java instal·lats | Fet |
+| — | Netskope (proxy corporatiu) interceptava l'HTTPS de `gcloud`/Node/Python | Resolt amb un paquet de certificats combinat a C:\Users\secretari\.certs\ |
+| — | Facturació vinculada (compte "Pago de Firebase") | Feta |
+| — | Firestore creat, mode natiu, `eur3` | Fet |
+| — | Regles (denega-ho tot als clients) + 7 índexs compostos + TTL sobre `activitat.caduca_el` | Desplegats |
+| — | Secret `control-horari-secret` a Secret Manager + permisos al compte de servei | Fet |
+| — | Cloud Run (`min-instances=0`, `max-instances=2`, `europe-west1`) | Desplegat |
+| — | Firebase Hosting (`control-horari-torre-espanyol.web.app`) | Desplegat |
+| — | URL directa de Cloud Run rebutjada (`DOMINI_PUBLIC`) | Verificat, 403 |
 
-Un cop fet, el desplegament és seguir `DESPLEGAMENT.md` de dalt a baix.
+**Parany trobat**: `gcloud run deploy --source .` no troba el `Dockerfile`
+perquè viu a `desplegament/Dockerfile`, no a l'arrel, i aquesta versió de
+`gcloud` no té `--dockerfile`. Es construeix la imatge amb `gcloud builds
+submit --config` (apuntant explícitament al Dockerfile) i després es
+desplega amb `gcloud run deploy --image`.
 
-### Pendent de decisió de l'usuari (pilot sense DPD)
+**Encara pendent** (vegeu `FLUX_OPERATIU.md` Fases 4-8): verificar des d'un
+mòbil amb dades mòbils, instal·lar la PWA, revisar el consum a la consola al
+cap d'una setmana, configuració real (serveis/horaris/festius) i alta dels
+treballadors.
+
+### Compliment: pilot sense DPD (actualitzat 2026-08-20)
 
 L'usuari ha decidit fer un **pilot sense passar pel DPD**. Això no elimina el
-tràmit, el posposa:
+tràmit, el posposa. Estat actual:
 
-- [ ] Documentació de compliment (RAT, anàlisi de riscos, nota informativa a
-      la plantilla). Hi ha l'encàrrec preparat a `encarrecs/4D-compliment-rgpd.md`.
-- [ ] Omplir els camps entre claudàtors de `templates/avis_legal.html`
-      (ajuntament, adreça, contacte, DPD).
+- [x] Avís legal (`templates/avis_legal.html`) omplert amb el nom real de
+      l'ajuntament i el correu de contacte (`secretaria@torredelespanyol.cat`),
+      per instrucció explícita de l'usuari (2026-08-20). Sense adreça postal
+      ni nom del DPD (no facilitats).
+- [ ] Documentació de compliment (RAT, anàlisi de riscos, nota informativa
+      formal). Hi ha l'encàrrec preparat a `encarrecs/4D-compliment-rgpd.md`.
 - [ ] Acceptar el DPA de Google Cloud.
 - [ ] Confirmar la normativa local de registre de jornada per a personal
       funcionari i si cal informar-ne la representació del personal.
 
-**Mentre no es faci: dades sintètiques.** El dia que un treballador real
-fitxi, hi ha un tractament de dades personals de ple dret.
+**Dades reals (2026-08-20):** l'usuari ha indicat explícitament que
+introduirà dades reals «de les que compto autorització», és a dir, que
+considera tenir la base per fer-ho pel seu compte, sense esperar el tràmit
+formal del RAT/DPD descrit a dalt. Aquesta és una decisió de l'usuari com a
+responsable del tractament, no una validació tècnica: cap agent ha revisat
+ni pot revisar si aquesta autorització és suficient.
 
 ### Millores que no s'han fet (decisions conscients)
 
@@ -106,6 +125,8 @@ fitxi, hi ha un tractament de dades personals de ple dret.
 | 2026-08-05 | Proves contra un adaptador **en memòria**: cap eina externa per treballar |
 | 2026-08-10 | **Pilot sense DPD**, per decisió de l'usuari. Dades sintètiques fins que es tramiti |
 | 2026-08-10 | Construcció feta per Opus en una sola sessió, no repartida entre agents |
+| 2026-08-20 | Desplegament real fet amb Sonnet, guiant l'usuari pas a pas per les accions que exigien el seu compte (autenticacions OAuth, facturació, alerta de pressupost) |
+| 2026-08-20 | L'usuari confirma que introduirà dades reals sota la seva pròpia autorització, sense esperar el tràmit formal del DPD |
 
 ---
 
@@ -114,4 +135,4 @@ fitxi, hi ha un tractament de dades personals de ple dret.
 | Data | Versió | On | Verificat per | Notes |
 |---|---|---|---|---|
 | 2026-08-10 | `main` | local (Docker i `python app_web.py`) | Opus | Recorregut sencer amb dades sintètiques |
-| | | Firebase | | pendent del compte de Google |
+| 2026-08-20 | `4a97e46` | Firebase (`control-horari-torre-espanyol`) | Sonnet, amb l'usuari | Desplegament real: Hosting + Cloud Run + Firestore. Verificat: `/avis-legal` i `/manifest.webmanifest` responen 200 per la URL pública; la URL directa de Cloud Run dona 403 |
