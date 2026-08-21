@@ -40,6 +40,12 @@ def crea_app(config_extra: dict | None = None, magatzem=None) -> Flask:
 
     app.config.update(
         SECRET_KEY=conf["SECRET_KEY"],
+        # __session i no `session`: Firebase Hosting NOMES reenvia cap a Cloud
+        # Run la galeta que es diu exactament aixi, i elimina totes les altres.
+        # Amb el nom per defecte de Flask, la sessio no arriba mai al servidor:
+        # cada peticio en comenca una de nova i el testimoni CSRF del formulari
+        # no quadra amb el de la sessio -> «El formulari ha caducat».
+        SESSION_COOKIE_NAME="__session",
         SESSION_COOKIE_HTTPONLY=True,
         SESSION_COOKIE_SAMESITE="Lax",
         SESSION_COOKIE_SECURE=conf["COOKIE_SECURE"],

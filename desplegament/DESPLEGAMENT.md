@@ -147,3 +147,33 @@ còpia dins del mateix proveïdor no és una còpia de seguretat.
 
 I **prova la restauració** abans de posar-hi dades reals, i un cop l'any. Un
 sistema de còpies que no s'ha provat mai no és un sistema de còpies.
+
+## 11. Avaries conegudes
+
+### «El formulari ha caducat» en entrar (error 400)
+
+Va passar de debò el 2026-08-21, amb l'aplicació ja desplegada.
+
+**Causa.** Firebase Hosting només reenvia cap a Cloud Run la galeta que es diu
+exactament `__session`; la resta les elimina pel camí. Amb el nom per defecte
+de Flask (`session`), la sessió no arriba mai al servidor: cada petició en
+comença una de nova, el testimoni CSRF del formulari no quadra amb el de la
+sessió i entrar és impossible. En local no es veu, perquè en local no hi ha
+Hosting pel mig.
+
+**Solució.** `SESSION_COOKIE_NAME="__session"` a `app_web.py`. Ho protegeixen
+dues proves a `tests/test_esquelet.py`; si algú les toca, l'aplicació
+desplegada deixa de funcionar tot i que en local sembli correcta.
+
+**Com comprovar-ho des del terminal.** Dues trampes van fer-me creure que la
+correcció no havia funcionat:
+
+- `curl -c fitxer.txt` **no desa el pot de galetes** en aquest Windows. Passa
+  la galeta a mà amb `-H "Cookie: __session=..."`.
+- Flask-WTF, en HTTPS, exigeix la capçalera `Referer` (`WTF_CSRF_SSL_STRICT`).
+  Un `curl` pelat no l'envia i el CSRF falla encara que tot estigui bé. Cal
+  afegir-hi `-H "Referer: https://EL-DOMINI/login"`.
+
+Amb les dues coses, el POST amb una contrasenya dolenta ha de respondre
+«l'usuari o la contrasenya no són correctes» — que vol dir que el CSRF ha
+passat.

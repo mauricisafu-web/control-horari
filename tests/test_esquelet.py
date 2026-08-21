@@ -97,3 +97,23 @@ def test_domini_public_rebutja_un_altre_host(magatzem, monkeypatch):
     assert client.get("/avis-legal", headers={"Host": "impostor.run.app"}).status_code == 403
     assert client.get("/avis-legal",
                       headers={"Host": "control-horari.exemple.cat"}).status_code == 200
+
+
+def test_la_galeta_de_sessio_es_diu___session(app):
+    """Firebase Hosting NOMÉS reenvia cap a Cloud Run la galeta anomenada
+    `__session`; qualsevol altra l'elimina pel camí.
+
+    Amb el nom per defecte de Flask (`session`), la sessió no arriba mai al
+    servidor: cada petició en comença una de nova, el testimoni CSRF del
+    formulari no quadra amb el de la sessió i entrar és impossible («El
+    formulari ha caducat»). Va passar de debò en producció el 2026-08-21.
+
+    Si algú ho canvia, l'aplicació desplegada deixa de funcionar tot i que
+    en local sembli correcta."""
+    assert app.config["SESSION_COOKIE_NAME"] == "__session"
+
+
+def test_la_galeta_de_sessio_arriba_al_navegador_amb_aquest_nom(client):
+    resposta = client.get("/avis-legal")
+    galetes = resposta.headers.getlist("Set-Cookie")
+    assert any(g.startswith("__session=") for g in galetes), galetes
