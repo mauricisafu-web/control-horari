@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% block titol %}Carrega treballadors{% endblock %}
+{% block css_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/configuracio.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/importa.css') }}">
+{% endblock %}
+{% block contingut %}
+
+<h1>Carrega treballadors des d'un fitxer</h1>
+<p class="accions">
+  <a class="btn btn-secundari" href="{{ url_for('configuracio.pantalla_comptes') }}">← Comptes</a>
+</p>
+
+{# ------------------------------------------------------------------ #}
+{# Resultat d'una càrrega que s'acaba d'aplicar                        #}
+{# ------------------------------------------------------------------ #}
+{% if resultat %}
+<div class="targeta">
+  <h2>Càrrega feta</h2>
+  <div class="totals-importacio">
+    <div><span class="etiqueta-total">Creats</span><strong>{{ resultat.creats }}</strong></div>
+    <div><span class="etiqueta-total">Actualitzats</span><strong>{{ resultat.actualitzats }}</strong></div>
+    <div><span class="etiqueta-total">De baixa</span><strong>{{ resultat.baixes }}</strong></div>
+  </div>
+
+  {% if resultat.generades %}
+    {# Només surten aquí les que ha hagut de generar l'aplicació perquè el
+       fitxer no en portava. Les que venien de nòmines no es mostren mai. #}
+    <h3>Contrasenyes generades</h3>
+    <p class="flash flash-avis">Aquestes contrasenyes <strong>no es tornaran a
+       mostrar mai més</strong>. El fitxer no en portava, i les ha generat
+       l'aplicació. Fes-les arribar per un canal segur: a la primera entrada,
+       l'aplicació obligarà a canviar-les.</p>
+    <div class="taula-envolt">
+      <table class="taula">
+        <thead><tr><th scope="col">Usuari</th><th scope="col">Contrasenya provisional</th></tr></thead>
+        <tbody>
+          {% for login, clau in resultat.generades.items() %}
+          <tr><th scope="row">{{ login }}</th><td><code class="clau">{{ clau }}</code></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+
+  {% if resultat.problemes %}
+    <h3>Coses que no s'han pogut fer</h3>
+    <ul class="llista-neta">
+      {% for problema in resultat.problemes %}<li class="negatiu">{{ problema }}</li>{% endfor %}
+    </ul>
+  {% endif %}
+</div>
+{% endif %}
+
+{# ------------------------------------------------------------------ #}
+{# Pujada del fitxer                                                    #}
+{# ------------------------------------------------------------------ #}
+{% if not pla %}
+<div class="targeta">
+  <h2>Puja el fitxer</h2>
+  <p class="subtitol">El genera l'aplicació de nòmines. Aquí no passarà res
+     fins que hagis vist què es farà i ho confirmis.</p>
+  <form method="post" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="accio" value="previsualitza">
+    <p class="camp">
+      <label for="fitxer">Fitxer CSV</label>
+      <input id="fitxer" name="fitxer" type="file" accept=".csv,text/csv" required>
+      <span class="ajuda">Columnes: usuari, nom i correu (obligatòries);
+        servei, rol, data_alta i contrasenya (opcionals).</span>
+    </p>
+    <p class="accions"><button class="btn" type="submit">Mira què passarà</button></p>
+  </form>
+</div>
+{% endif %}
+
+{# ------------------------------------------------------------------ #}
+{# Previsualització: què es farà                                        #}
+{# ------------------------------------------------------------------ #}
+{% if pla %}
+<form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="accio" value="aplica">
+  <input type="hidden" name="contingut" value="{{ contingut }}">
+
+  {% if pla.errors %}
+  <div class="targeta targeta-error">
+    <h2>Errors ({{ pla.errors|length }})</h2>
+    <p class="subtitol">Aquestes files s'ignoraran. La resta del fitxer sí que
+       es carregarà.</p>
+    <ul class="llista-neta">
+      {% for p in pla.errors %}<li class="negatiu">{{ p.detall }}</li>{% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <div class="targeta">
+    <h2>Es crearan ({{ pla.crear|length }})</h2>
+    {% if not pla.crear %}<p class="subtitol">Cap compte nou.</p>{% else %}
+    <div class="taula-envolt">
+      <table class="taula">
+        <thead><tr><th scope="col">Usuari</th><th scope="col">Nom</th>
+                   <th scope="col">Què es crearà</th></tr></thead>
+        <tbody>
+          {% for p in pla.crear %}
+          <tr><th scope="row">{{ p.login }}</th><td>{{ p.nom }}</td>
+              <td>{{ p.detall }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="targeta">
+    <h2>S'actualitzaran ({{ pla.actualitzar|length }})</h2>
+    {% if not pla.actualitzar %}<p class="subtitol">Cap canvi.</p>{% else %}
+    <div class="taula-envolt">
+      <table class="taula">
+        <thead><tr><th scope="col">Usuari</th><th scope="col">Nom</th>
+                   <th scope="col">Què canviarà</th></tr></thead>
+        <tbody>
+          {% for p in pla.actualitzar %}
+          <tr><th scope="row">{{ p.login }}</th><td>{{ p.nom }}</td>
+              <td>{{ p.detall }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if pla.baixes %}
+  <div class="targeta targeta-avis">
+    <h2>Ja no surten al fitxer ({{ pla.baixes|length }})</h2>
+    {# Cap baixa s'aplica sense marcar-la: un fitxer mal exportat no pot
+       desactivar mitja plantilla d'un clic. #}
+    <p class="flash flash-avis">No es donarà de baixa ningú que no marquis
+       aquí. Donar de baixa <strong>no esborra res</strong>: es conserven tots
+       els seus marcatges, com exigeix la llei.</p>
+    <ul class="llista-neta baixes">
+      {% for p in pla.baixes %}
+      <li>
+        <label>
+          <input type="checkbox" name="baixa" value="{{ p.login }}">
+          <span><strong>{{ p.nom }}</strong> <span class="codi">{{ p.login }}</span></span>
+        </label>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {% if pla.sense_canvis %}
+  <div class="targeta">
+    <h2>Sense canvis ({{ pla.sense_canvis|length }})</h2>
+    <p class="subtitol">
+      {% for p in pla.sense_canvis %}{{ p.login }}{{ ', ' if not loop.last }}{% endfor %}
+    </p>
+  </div>
+  {% endif %}
+
+  <p class="accions">
+    <button class="btn" type="submit">Aplica-ho</button>
+    <a class="btn btn-secundari" href="{{ url_for('configuracio.pantalla_importa') }}">Cancel·la</a>
+  </p>
+</form>
+{% endif %}
+
+{% endblock %}

@@ -22,7 +22,7 @@ def text(r):
 # Matriu de permisos
 # ===========================================================================
 RUTES_ADMIN = ["/configuracio/", "/configuracio/horaris", "/configuracio/comptes",
-               "/informes"]
+               "/configuracio/importa", "/informes"]
 RUTES_APROVAR = ["/gestio", "/gestio/hores"]
 RUTES_TOTHOM = ["/", "/hores", "/el-meu-horari", "/absencies", "/marcatges"]
 

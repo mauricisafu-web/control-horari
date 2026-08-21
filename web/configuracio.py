@@ -15,7 +15,10 @@ from flask import (
 )
 from flask_login import current_user
 
-from core import comptes as regles_comptes, festius as importador, notifica, regles
+from core import (
+    comptes as regles_comptes, festius as importador, importa, notifica, regles,
+)
+from core.format_importacio import CODIFICACIO
 from core.model import (
     AMBIT_TOTS, AMBITS_FESTIU, ASSUMPTES_PROPIS, DIES_SETMANA, ETIQUETA_ROL,
     ErrorHorari, ROL_ADMIN, ROLS, VACANCES,
@@ -313,3 +316,190 @@ def compte():
         registra("CONFIG", current_user.get_id(), f"compte {accio} {login}")
         flash("Compte actualitzat.", "ok")
     return redirect(url_for("configuracio.pantalla_comptes"))
+
+
+# -- càrrega de treballadors des d'un fitxer --------------------------------
+# El fitxer el genera l'aplicació de nòmines i el puja un administrador. Vegeu
+# `desplegament/INTEGRACIO_NOMINES.md`: la direcció és única (nòmines → control
+# horari) i d'aquí no en surt mai cap contrasenya cap enrere.
+LIMIT_FITXER = 2 * 1024 * 1024
+
+
+def _llegeix_pujat(fitxer) -> str:
+    """El contingut del CSV pujat, ja convertit a text.
+
+    Pujar per error un `.xlsx`, un fitxer buit o cap fitxer és el cas NORMAL,
+    no una fallada del programa: cada cas surt com un `ErrorHorari` amb un
+    missatge que es pot ensenyar, mai com un 500."""
+    if fitxer is None or not (fitxer.filename or "").strip():
+        raise ErrorHorari("Cal triar un fitxer.")
+
+    dades = fitxer.read()
+    limit = current_app.config.get("MAX_CONTENT_LENGTH") or LIMIT_FITXER
+    if len(dades) > limit:
+        raise ErrorHorari(f"El fitxer és massa gros: el màxim són "
+                          f"{limit // 1024} kB.")
+    try:
+        contingut = dades.decode(CODIFICACIO)
+    except (UnicodeDecodeError, AttributeError):
+        raise ErrorHorari("Això no sembla un CSV de text. Exporta'l des de "
+                          "l'aplicació de nòmines i torna-ho a provar.")
+    if not contingut.strip():
+        raise ErrorHorari("El fitxer és buit.")
+    return contingut
+
+
+def _pla_importacio(contingut: str):
+    """Analitza el text i el compara amb el que ja hi ha al magatzem.
+
+    Els comptes es demanen amb `actius=False` a propòsit: qui està donat de
+    baixa i torna a sortir al fitxer s'ha de reactivar, no tornar a crear."""
+    files, errors = importa.analitza(contingut)
+    noms_servei = {s["nom"]: s["id"] for s in serveis.llista(g.mag)}
+    return importa.calcula_pla(files, comptes.llista(g.mag, actius=False),
+                               noms_servei, errors)
+
+
+def _crea_els_nous(pla, problemes: list[str]) -> tuple[int, dict[str, str]]:
+    """Crea els comptes proposats. Retorna (quants, contrasenyes generades).
+
+    La contrasenya que ve al fitxer NO es mostra ni es registra: nòmines ja
+    l'ha enviada per correu i aquí només es xifra. Només s'ensenyen les que
+    ha hagut de generar l'aplicació perquè la fila no en portava."""
+    creats, generades = 0, {}
+    for proposta in pla.crear:
+        fila = proposta.fila
+        if fila is None:
+            continue
+        provisional = (fila.contrasenya or "").strip()
+        cal_ensenyar = not provisional
+        if cal_ensenyar:
+            provisional = regles_comptes.contrasenya_provisional()
+        try:
+            comptes.crea(g.mag, proposta.login, fila.nom, fila.correu,
+                         regles_comptes.hash_contrasenya(provisional),
+                         fila.rol, proposta.servei_id, fila.data_alta)
+        except (ErrorHorari, ValueError) as e:
+            problemes.append(f"{proposta.login}: {e}")
+            continue
+        creats += 1
+        if cal_ensenyar:
+            generades[proposta.login] = provisional
+    return creats, generades
+
+
+def _actualitza_els_existents(pla, problemes: list[str]) -> int:
+    """Nom, correu, rol, servei i data d'alta. La contrasenya, MAI: una
+    càrrega no pot canviar la de ningú que ja estigui fent servir l'app."""
+    actualitzats = 0
+    for proposta in pla.actualitzar:
+        fila = proposta.fila
+        if fila is None:
+            continue
+        # `actiu` i `data_baixa`: si tornava a sortir al fitxer, es reactiva.
+        # `servei_id` ja ve resolt de la proposta, i quan el fitxer el porta
+        # buit hi ve el que el compte ja tenia («buit = no es toca»).
+        camps = {"nom": fila.nom, "rol": fila.rol, "actiu": True,
+                 "data_baixa": None, "servei_id": proposta.servei_id}
+        if fila.data_alta:
+            camps["data_alta"] = fila.data_alta
+        # El correu ha de ser únic: només es canvia si no és el d'una altra
+        # persona. Si ho fos, quedarien dos comptes amb el mateix correu i la
+        # recuperació de contrasenya no sabria a qui escriure.
+        altre = comptes.per_correu(g.mag, fila.correu)
+        if altre is None or altre.login == proposta.login:
+            camps["correu"] = fila.correu
+
+        try:
+            comptes.actualitza(g.mag, proposta.login, **camps)
+        except (ErrorHorari, ValueError) as e:
+            problemes.append(f"{proposta.login}: {e}")
+            continue
+        actualitzats += 1
+    return actualitzats
+
+
+def _dona_de_baixa(pla, marcades: set[str], problemes: list[str]) -> int:
+    """NOMÉS les que l'administrador ha marcat, una per una.
+
+    Donar de baixa no esborra res: desactiva el compte i hi posa la data.
+    Els marcatges es conserven els quatre anys que toca."""
+    admins = {t.login for t in comptes.llista(g.mag) if t.rol == ROL_ADMIN}
+    baixes = 0
+    for proposta in pla.baixes:
+        if proposta.login not in marcades:
+            continue
+        if proposta.login == current_user.get_id():
+            problemes.append(f"{proposta.login}: no et pots donar de baixa a "
+                             f"tu mateix.")
+            continue
+        if proposta.login in admins and len(admins) <= 1:
+            problemes.append(f"{proposta.login}: no pots desactivar l'últim "
+                             f"administrador.")
+            continue
+        try:
+            comptes.desactiva(g.mag, proposta.login, date.today())
+        except (ErrorHorari, ValueError) as e:
+            problemes.append(f"{proposta.login}: {e}")
+            continue
+        admins.discard(proposta.login)
+        baixes += 1
+    return baixes
+
+
+@configuracio.route("/importa", methods=["GET", "POST"])
+@cal_admin
+def pantalla_importa():
+    """Càrrega de treballadors en dos passos: previsualitzar i aplicar.
+
+    Aplicar torna a analitzar i a recalcular el pla a partir del contingut del
+    fitxer: del formulari només se'n creu QUINES baixes s'han marcat. Si es
+    confiés en la resta, qualsevol amb sessió d'administrador podria fabricar
+    una petició que creï el compte que vulgui amb el rol que vulgui."""
+    if request.method == "GET":
+        return render_template("configuracio/importa.html",
+                               pla=None, contingut="", resultat=None)
+
+    aplica = request.form.get("accio") == "aplica"
+    try:
+        if aplica:
+            contingut = request.form.get("contingut") or ""
+            if not contingut.strip():
+                raise ErrorHorari("S'ha perdut el contingut del fitxer. "
+                                  "Torna'l a pujar.")
+        else:
+            contingut = _llegeix_pujat(request.files.get("fitxer"))
+        pla = _pla_importacio(contingut)
+    except (ErrorHorari, ValueError) as e:
+        flash(str(e), "error")
+        return redirect(url_for("configuracio.pantalla_importa"))
+
+    if not aplica:
+        return render_template("configuracio/importa.html",
+                               pla=pla, contingut=contingut, resultat=None)
+
+    marcades = {b.strip().lower() for b in request.form.getlist("baixa")}
+    problemes: list[str] = []
+    creats, generades = _crea_els_nous(pla, problemes)
+    actualitzats = _actualitza_els_existents(pla, problemes)
+    baixes = _dona_de_baixa(pla, marcades, problemes)
+
+    # Al registre hi van els COMPTADORS, mai els noms ni les contrasenyes.
+    resum = (f"importació: {creats} creats, {actualitzats} actualitzats, "
+             f"{baixes} baixes")
+    if creats:
+        registra("ALTA_COMPTE", current_user.get_id(), f"importació: {creats}")
+        activitat.registra(g.mag, "ALTA_COMPTE", current_user.get_id(),
+                           f"importació: {creats}")
+    registra("CONFIG", current_user.get_id(), resum)
+    activitat.registra(g.mag, "CONFIG", current_user.get_id(), resum)
+
+    flash(f"Càrrega feta: {creats} comptes creats, {actualitzats} "
+          f"actualitzats i {baixes} donats de baixa.", "ok")
+    return render_template("configuracio/importa.html",
+                           pla=None, contingut="",
+                           resultat={"creats": creats,
+                                     "actualitzats": actualitzats,
+                                     "baixes": baixes,
+                                     "generades": generades,
+                                     "problemes": problemes})

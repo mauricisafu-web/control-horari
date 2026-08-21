@@ -1,0 +1,40 @@
+/* importa.css — Càrrega de treballadors des del fitxer de nòmines. */
+
+.targeta-error { border-color: var(--vermell); }
+.targeta-avis { border-color: var(--groc); }
+
+.totals-importacio {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: .75rem;
+  margin-bottom: 1rem;
+}
+.totals-importacio > div { text-align: center; }
+.totals-importacio .etiqueta-total {
+  display: block; font-size: .75rem; text-transform: uppercase;
+  letter-spacing: .04em; color: var(--text-fluix);
+}
+.totals-importacio strong {
+  font-size: 1.6rem; font-variant-numeric: tabular-nums;
+}
+
+/* Les baixes són caselles: cap s'aplica sense marcar-la a mà. L'àrea
+   tàctil ha de ser tota la fila, no només el quadradet. */
+.baixes label {
+  display: flex; align-items: center; gap: .6rem;
+  min-height: 44px; cursor: pointer;
+}
+.baixes input[type="checkbox"] {
+  width: auto; min-height: auto; flex: 0 0 auto;
+  transform: scale(1.3); margin: 0 .2rem;
+}
+
+.clau {
+  font-family: ui-monospace, "Cascadia Code", monospace;
+  font-size: 1rem; letter-spacing: .05em;
+  background: var(--fons); border: 1px solid var(--vora);
+  border-radius: var(--radi); padding: .2rem .45rem;
+}
+
+.codi {
+  font-family: ui-monospace, "Cascadia Code", monospace;
+  font-size: .85rem; color: var(--text-fluix);
+}
