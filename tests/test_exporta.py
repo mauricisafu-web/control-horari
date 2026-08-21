@@ -433,3 +433,37 @@ def test_cap_ordre_obre_res_en_escriptura_fora_de_la_sortida(tmp_path,
 
     assert oberts == [sortida.resolve()]
     assert obre_original is original
+
+
+# --------------------------------------------------------------------------
+# Regressió: la consola de Windows en cp1252
+# --------------------------------------------------------------------------
+def test_prepara_no_peta_amb_la_consola_en_cp1252(tmp_path):
+    """Va passar de debò el 2026-08-21: la consola de Windows arrenca en
+    cp1252, que no té els caràcters «⚠», «✓» ni «✗» dels avisos. `capsys`
+    substitueix stdout per un flux que SÍ els accepta, així que aquesta
+    prova no es podia escriure amb `capsys`: calia un procés de debò amb la
+    mateixa codificació que trobaria l'usuari, o el forat es tornaria a
+    colar sense que cap prova se n'adonés.
+
+    Amb el fitxer ja escrit correctament i només el missatge final petant,
+    l'usuari es quedava sense saber-ho: `prepara` semblava haver fallat del
+    tot quan en realitat el CSV ja hi era."""
+    import os
+    import subprocess
+
+    xlsx = fes_xlsx(tmp_path / "treballadors.xlsx")
+    sortida = tmp_path / "s.csv"
+
+    entorn = dict(os.environ)
+    entorn.pop("PYTHONIOENCODING", None)
+    entorn.pop("PYTHONUTF8", None)
+    entorn["PYTHONLEGACYWINDOWSSTDIO"] = "1"
+
+    resultat = subprocess.run(
+        [sys.executable, str(ARREL / "eines" / "exporta_des_de_nomines.py"),
+         "prepara", "--xlsx", str(xlsx), "--sortida", str(sortida)],
+        capture_output=True, text=False, env=entorn, timeout=30)
+
+    assert resultat.returncode == 0, resultat.stderr.decode("cp1252", "replace")
+    assert sortida.exists()

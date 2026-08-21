@@ -412,6 +412,13 @@ def construeix_analitzador() -> argparse.ArgumentParser:
 
 
 def main(argv=None) -> int:
+    # La consola de Windows arrenca en cp1252 per defecte, que no te
+    # els caracters "⚠", "✓" i "✗" que fan servir els avisos.
+    # Sense aixo, l'eina peta DESPRES d'haver generat be el fitxer: el
+    # CSV surt correcte pero el missatge final no arriba a sortir mai.
+    for flux in (sys.stdout, sys.stderr):
+        if hasattr(flux, "reconfigure"):
+            flux.reconfigure(encoding="utf-8", errors="replace")
     arg = construeix_analitzador().parse_args(argv)
     return arg.func(arg)
 
