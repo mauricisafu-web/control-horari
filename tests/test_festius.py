@@ -44,11 +44,11 @@ def obre_amb(per_dataset: dict):
 def test_importa_generals_i_locals():
     obre = obre_amb({
         festius.DATASET_GENERALS: [
-            {"data": "2026-01-01", "nom_festiu": "Cap d'Any"},
-            {"data": "2026-01-06T00:00:00", "nom_festiu": "Reis"},
+            {"any": "2026", "data": "2026-01-01T00:00:00.000", "nom_del_festiu": "Cap d'Any"},
+            {"any": "2026", "data": "2026-01-06T00:00:00.000", "nom_del_festiu": "Reis"},
         ],
         festius.DATASET_LOCALS: [
-            {"data": "2026-08-15", "nom_festiu": "Festa major"},
+            {"any_calendari": "2026", "data": "2026-08-15T00:00:00.000", "festiu": "Festa major"},
         ],
     })
     resultat = festius.importa(2026, "43152", obre=obre)
@@ -59,8 +59,8 @@ def test_importa_generals_i_locals():
 
 def test_el_resultat_ve_ordenat_per_data():
     obre = obre_amb({festius.DATASET_GENERALS: [
-        {"data": "2026-06-24", "nom_festiu": "Sant Joan"},
-        {"data": "2026-01-01", "nom_festiu": "Cap d'Any"}]})
+        {"any": "2026", "data": "2026-06-24T00:00:00.000", "nom_del_festiu": "Sant Joan"},
+        {"any": "2026", "data": "2026-01-01T00:00:00.000", "nom_del_festiu": "Cap d'Any"}]})
     dates = [f[0] for f in festius.importa(2026, obre=obre)]
     assert dates == sorted(dates)
 
@@ -73,9 +73,9 @@ def test_les_files_sense_data_s_ignoren_sense_tombar_la_importacio():
     """Tolerant en llegir, estricte en validar: si un dia el dataset canvia
     de forma, el que es pugui aprofitar s'aprofita."""
     obre = obre_amb({festius.DATASET_GENERALS: [
-        {"nom_festiu": "Sense data"},
-        {"data": "no és una data", "nom_festiu": "Dolenta"},
-        {"data": "2026-01-01", "nom_festiu": "Bona"},
+        {"nom_del_festiu": "Sense data"},
+        {"data": "no és una data", "nom_del_festiu": "Dolenta"},
+        {"data": "2026-01-01", "nom_del_festiu": "Bona"},
         "això no és ni un diccionari",
     ]})
     resultat = festius.importa(2026, obre=obre)
@@ -84,8 +84,8 @@ def test_les_files_sense_data_s_ignoren_sense_tombar_la_importacio():
 
 def test_una_data_repetida_no_es_duplica():
     obre = obre_amb({
-        festius.DATASET_GENERALS: [{"data": "2026-08-15", "nom_festiu": "Assumpció"}],
-        festius.DATASET_LOCALS: [{"data": "2026-08-15", "nom_festiu": "Festa major"}],
+        festius.DATASET_GENERALS: [{"any": "2026", "data": "2026-08-15", "nom_del_festiu": "Assumpció"}],
+        festius.DATASET_LOCALS: [{"any_calendari": "2026", "data": "2026-08-15T00:00:00.000", "festiu": "Festa major"}],
     })
     assert len(festius.importa(2026, obre=obre)) == 1
 

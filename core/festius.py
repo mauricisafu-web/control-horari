@@ -66,11 +66,15 @@ def importa(any: int, codi_ine: str = "43152",
     resultat: list[tuple[date, str, str]] = []
     vistes: set[date] = set()
 
-    for dataset, ambit, extra in (
-        (DATASET_GENERALS, AMBIT_GENERAL, {}),
-        (DATASET_LOCALS, AMBIT_LOCAL, {"codi_municipi_ine": str(codi_ine)}),
+    # Els dos datasets NO tenen el mateix esquema, tot i venir del mateix
+    # portal: el de festes generals filtra per `any` i el de locals per
+    # `any_calendari`. Enviar-hi el camp equivocat dona un HTTP 400.
+    for dataset, ambit, camp_any, extra in (
+        (DATASET_GENERALS, AMBIT_GENERAL, "any", {}),
+        (DATASET_LOCALS, AMBIT_LOCAL, "any_calendari",
+         {"codi_municipi_ine": str(codi_ine)}),
     ):
-        parametres = {"any": str(any), "$limit": "200", **extra}
+        parametres = {camp_any: str(any), "$limit": "200", **extra}
         for fila in _consulta(dataset, parametres, obre):
             if not isinstance(fila, dict):
                 continue
@@ -81,8 +85,11 @@ def importa(any: int, codi_ine: str = "43152",
                           or fila.get("dia"))
             if dia is None or dia in vistes:
                 continue
-            nom = (fila.get("nom_festiu") or fila.get("festiu")
-                   or fila.get("nom") or "Festiu")
+            # `nom_del_festiu` a les generals; `festiu` a les locals (que hi
+            # posa sempre «Festiu local»). La resta de noms son alternatives
+            # tolerants per si el portal els torna a canviar.
+            nom = (fila.get("nom_del_festiu") or fila.get("nom_festiu")
+                   or fila.get("festiu") or fila.get("nom") or "Festiu")
             vistes.add(dia)
             resultat.append((dia, str(nom).strip()[:120], ambit))
 
