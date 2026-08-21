@@ -79,5 +79,14 @@ def carrega() -> dict:
         "SMTP_TLS": _bool("SMTP_TLS", True),
         "SMTP_REMITENT": os.environ.get("SMTP_REMITENT", ""),
 
+        # Avisos push cap al mòbil (RFC 8292). Sense claus, queden
+        # desactivats i s'anota, igual que el correu sense SMTP_HOST.
+        # Es generen UNA vegada amb `python eines/claus_push.py` i la
+        # privada va a Secret Manager, mai al repositori.
+        "VAPID_PUBLIC": os.environ.get("VAPID_PUBLIC", "").strip(),
+        "VAPID_PRIVATE": os.environ.get("VAPID_PRIVATE", "").strip(),
+        "VAPID_SUBJECT": os.environ.get(
+            "VAPID_SUBJECT", "mailto:secretaria@torredelespanyol.cat"),
+
         "PORT": _enter("PORT", 5004),
     }

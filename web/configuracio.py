@@ -26,7 +26,7 @@ from core.model import (
 from core.registre import registra
 from magatzem import (
     absencies as mag_absencies, activitat, comptes, festius, horaris,
-    parametres, serveis,
+    parametres, serveis, subscripcions,
 )
 from web.comu import a_data, cal_admin
 
@@ -317,6 +317,10 @@ def compte():
             if len(actius) <= 1 and any(t.login == login for t in actius):
                 raise ErrorHorari("No pots desactivar l'últim administrador.")
             comptes.desactiva(g.mag, login, a_data(request.form.get("data_baixa")))
+            # Qui ja no hi treballa no ha de continuar rebent avisos al
+            # mòbil, i el seu dispositiu deixa de ser una dada que
+            # tinguem cap motiu per conservar.
+            subscripcions.esborra_de(g.mag, login)
 
         elif accio == "alta_de_nou":
             comptes.actualitza(g.mag, login, actiu=True, data_baixa=None)

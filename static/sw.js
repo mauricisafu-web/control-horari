@@ -72,3 +72,49 @@ self.addEventListener('fetch', (e) => {
     })
   );
 });
+
+/* --------------------------------------------------------------------------
+ * Avisos push.
+ *
+ * El contingut arriba XIFRAT d'extrem a extrem (RFC 8291): el servei de push
+ * del fabricant del navegador no el pot llegir. Tot i així, l'avís es veu a la
+ * pantalla de bloqueig, o sigui que el servidor només hi posa textos genèrics
+ * (mai de qui, ni quants dies, ni quin període).
+ * ----------------------------------------------------------------------- */
+self.addEventListener('push', (e) => {
+  let dades = { titol: 'Control horari', cos: 'Tens una novetat.', ruta: '/' };
+  try {
+    if (e.data) { dades = Object.assign(dades, e.data.json()); }
+  } catch (_) {
+    // Un avís amb el cos malmès s'ha d'ensenyar igualment amb el text per
+    // defecte: val més un avís pobre que cap avís.
+  }
+  e.waitUntil(self.registration.showNotification(dades.titol, {
+    body: dades.cos,
+    icon: '/static/icones/icona-192.png',
+    badge: '/static/icones/icona-192.png',
+    lang: 'ca',
+    // Amb la mateixa etiqueta, un avís nou en SUBSTITUEIX un de vell en
+    // comptes d'apilar-s'hi: ningú vol trobar-se vuit avisos iguals.
+    tag: dades.ruta || 'control-horari',
+    data: { ruta: dades.ruta || '/' },
+  }));
+});
+
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  const desti = (e.notification.data && e.notification.data.ruta) || '/';
+  e.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then((finestres) => {
+        // Si l'aplicació ja és oberta, s'hi navega en comptes d'obrir-ne una
+        // segona finestra.
+        for (const f of finestres) {
+          if (new URL(f.url).origin === self.location.origin && 'focus' in f) {
+            return f.navigate(desti).then((c) => (c || f).focus());
+          }
+        }
+        return self.clients.openWindow(desti);
+      })
+  );
+});

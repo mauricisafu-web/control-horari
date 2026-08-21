@@ -29,8 +29,8 @@ from magatzem import (
     parametres,
 )
 from web.comu import (
-    ambits_meus, any_i_mes, cal_aprovar, cal_fitxatge, fitxatge_actiu,
-    jornada_maxima, limits_del_mes, resum_del_periode,
+    ambits_meus, any_i_mes, avisa_al_mobil, cal_aprovar, cal_fitxatge,
+    fitxatge_actiu, jornada_maxima, limits_del_mes, resum_del_periode,
 )
 
 gestio = Blueprint("gestio", __name__)
@@ -149,6 +149,10 @@ def resol():
                        f"{codi} {estat}")
 
     resolta = mag_absencies.per_codi(g.mag, codi)
+    # L'avís al mòbil és la via principal; el correu queda per si algun dia hi
+    # ha SMTP. Cap dels dos pot tombar una resolució que ja està desada.
+    avisa_al_mobil([absencia.treballador_id], "avisa_resolucio",
+                   aprovada=(estat == APROVADA))
     notifica.avisa_resolucio(current_app.config["APP"], resolta, treballador)
     flash(f"Sol·licitud {codi} {ETIQUETA_ESTAT[estat].lower()}.", "ok")
     return redirect(url_for("gestio.index"))

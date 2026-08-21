@@ -23,7 +23,10 @@ from core.model import (
 )
 from core.registre import registra
 from magatzem import absencies as mag, activitat, festius, parametres
-from web.comu import a_data, any_i_mes, correus_dels_aprovadors
+from web.comu import (
+    a_data, any_i_mes, aprovadors_de, avisa_al_mobil,
+    correus_dels_aprovadors,
+)
 
 absencies = Blueprint("absencies", __name__)
 
@@ -107,13 +110,20 @@ def solicita():
     registra("ABSENCIA_SOL", login, codi, request.remote_addr or "")
     activitat.registra(g.mag, "ABSENCIA_SOL", login, codi)
 
-    # Primer es desa, després s'avisa: si l'SMTP falla, la sol·licitud hi és.
+    # Primer es desa, després s'avisa: si l'avís falla, la sol·licitud hi és.
     absencia = mag.per_codi(g.mag, codi)
-    if not notifica.avisa_nova_solicitud(
-            current_app.config["APP"], absencia, current_user.treballador,
-            correus_dels_aprovadors(current_user.servei_id)):
-        flash("La sol·licitud s'ha desat, però no s'ha pogut enviar l'avís "
-              "per correu. Avisa el teu responsable.", "avis")
+    aprovadors = aprovadors_de(current_user.servei_id)
+    # Push primer: és la via que l'ajuntament ha triat (vegeu core/push.py).
+    # El correu es manté per si algun dia es configura l'SMTP; ara mateix,
+    # sense SMTP_HOST, `avisa_nova_solicitud` no fa res i ho anota.
+    avisats = avisa_al_mobil([t.login for t in aprovadors],
+                             "avisa_nova_solicitud")
+    per_correu = notifica.avisa_nova_solicitud(
+        current_app.config["APP"], absencia, current_user.treballador,
+        correus_dels_aprovadors(current_user.servei_id))
+    if not avisats and not per_correu:
+        flash("La sol·licitud s'ha desat, però no s'ha pogut avisar ningú. "
+              "Diga-ho al teu responsable perquè hi entri a mirar-ho.", "avis")
 
     flash(f"Sol·licitud {codi} desada: {dies} dies. Queda pendent d'aprovació.",
           "ok")

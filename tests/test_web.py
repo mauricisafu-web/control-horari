@@ -66,6 +66,8 @@ def test_cap_ruta_de_l_aplicacio_es_queda_sense_provar(app):
         "/absencies/anula", "/gestio/resol", "/gestio/marcatge",
         "/configuracio/servei", "/configuracio/festiu", "/configuracio/parametre",
         "/configuracio/fitxatge",
+        # Els permisos d'aquestes es proven a tests/test_push.py.
+        "/push/clau", "/push/subscriu", "/push/baixa",
         "/configuracio/patro", "/configuracio/assignacio", "/configuracio/compte",
         "/informes/genera",
     }

@@ -21,6 +21,12 @@ gunicorn==23.0.0          # servidor de producció (Linux/Cloud Run)
 pyotp==2.9.0              # TOTP, RFC 6238
 qrcode==7.4.2             # QR en SVG, sense dependència de Pillow
 
+# --- Avisos push cap al mòbil (RFC 8291/8292) ---
+# Substitueixen el correu com a via d'avís: l'ajuntament no vol que les
+# credencials del seu servidor de correu surtin cap al núvol, i un avís push
+# no en necessita cap. Vegeu core/push.py.
+pywebpush==2.0.3
+
 # --- Informes ---
 reportlab==4.5.1          # PDF del registre de jornada (art. 34.9 ET)
 

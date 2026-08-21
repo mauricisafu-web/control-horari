@@ -40,6 +40,7 @@ SALDOS = "saldos"              # id = '<login>_<any>'
 MARCATGES = "marcatges"        # id automàtic (és l'única col·lecció que creix)
 COMPTADORS = "comptadors"      # id = clau del comptador
 ACTIVITAT = "activitat"        # log d'activitat, amb caducitat automàtica
+SUBSCRIPCIONS = "subscripcions"  # avisos push; id = empremta de l'endpoint
 
 DOC_CONFIG = "config"
 

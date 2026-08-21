@@ -198,3 +198,10 @@ input, select, textarea {
   h1 { font-size: 1.7rem; }
   .contingut { padding: 1.5rem 1rem 3rem; }
 }
+
+/* Estat del botó d'avisos push (pàgina d'instal·lació). */
+.estat-avisos:empty { display: none; }
+.estat-avisos { margin-top: .6rem; font-size: .9rem; }
+.estat-avisos.ok { color: var(--ok, #1c6b3a); font-weight: 600; }
+.estat-avisos.avis { color: var(--text-fluix); }
+.estat-avisos.error { color: var(--error, #a4272a); }

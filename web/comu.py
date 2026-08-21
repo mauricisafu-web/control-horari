@@ -12,9 +12,11 @@ from functools import wraps
 from flask import abort, current_app, flash, g, redirect, request, url_for
 from flask_login import current_user
 
-from core import comput
+from core import comput, push
 from core.model import AMBIT_TOTS, ROL_ADMIN, ROL_RESPONSABLE
-from magatzem import absencies, comptes, festius, marcatges, parametres
+from magatzem import (
+    absencies, comptes, festius, marcatges, parametres, subscripcions,
+)
 
 
 # -- accés ------------------------------------------------------------------
@@ -139,14 +141,41 @@ def resum_del_periode(login: str, inici: date, fi: date):
     )
 
 
+def aprovadors_de(servei_id: str | None) -> list:
+    """Qui pot aprovar les absències d'un servei. Es resol UNA vegada per
+    petició: la fan servir l'avís per correu i el push."""
+    clau = f"_aprovadors_{servei_id or ''}"
+    if not hasattr(g, clau):
+        trobats = []
+        for treballador in comptes.llista(g.mag):
+            if treballador.rol == ROL_ADMIN:
+                trobats.append(treballador)
+            elif treballador.rol == ROL_RESPONSABLE:
+                ambits = comptes.ambits_de(g.mag, treballador.login)
+                if AMBIT_TOTS in ambits or (servei_id and servei_id in ambits):
+                    trobats.append(treballador)
+        setattr(g, clau, trobats)
+    return getattr(g, clau)
+
+
 def correus_dels_aprovadors(servei_id: str | None) -> list[str]:
     """Els correus de qui pot aprovar les absències d'un servei."""
-    correus = []
-    for treballador in comptes.llista(g.mag):
-        if treballador.rol == ROL_ADMIN:
-            correus.append(treballador.correu)
-        elif treballador.rol == ROL_RESPONSABLE:
-            ambits = comptes.ambits_de(g.mag, treballador.login)
-            if AMBIT_TOTS in ambits or (servei_id and servei_id in ambits):
-                correus.append(treballador.correu)
-    return [c for c in correus if c]
+    return [t.correu for t in aprovadors_de(servei_id) if t.correu]
+
+
+def avisa_al_mobil(logins, quin: str, **extra) -> int:
+    """Envia un avís push a les persones indicades.
+
+    Viu aquí i no a `core/push.py` perquè és el pont entre el mòdul pur
+    (que no sap què és un magatzem) i les subscripcions desades. Mai
+    llança: un avís que falla no pot tombar l'operació que l'ha provocat."""
+    try:
+        subs = subscripcions.de_treballadors(g.mag, list(logins))
+        if not subs:
+            return 0
+        funcio = getattr(push, quin)
+        return funcio(current_app.config["APP"], subs,
+                      esborra=lambda id_: subscripcions.esborra(g.mag, id_),
+                      **extra)
+    except Exception:      # noqa: BLE001 — deliberadament ampli
+        return 0
