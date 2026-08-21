@@ -136,3 +136,20 @@ ni pot revisar si aquesta autorització és suficient.
 |---|---|---|---|---|
 | 2026-08-10 | `main` | local (Docker i `python app_web.py`) | Opus | Recorregut sencer amb dades sintètiques |
 | 2026-08-20 | `4a97e46` | Firebase (`control-horari-torre-espanyol`) | Sonnet, amb l'usuari | Desplegament real: Hosting + Cloud Run + Firestore. Verificat: `/avis-legal` i `/manifest.webmanifest` responen 200 per la URL pública; la URL directa de Cloud Run dona 403 |
+| 2026-08-21 | `control-horari-00002-tlg` | Firebase (`control-horari-torre-espanyol`) | Opus | Correcció de la galeta `__session`. Verificat en producció: la sessió es manté entre peticions, el testimoni CSRF és estable i el POST de `/login` supera la comprovació CSRF |
+
+---
+
+## Estat real de les dades de producció (2026-08-21)
+
+| Col·lecció | Documents | Comentari |
+|---|---|---|
+| `serveis` | 3 | Oficines, Brigada, SAIAR |
+| `festius` | 2 | anys 2026 i 2027 importats |
+| `treballadors` | 1 | només `msabaterf` (administrador) |
+| `patrons` | **0** | **buit: cap horari teòric definit** |
+| `absencies` | 0 | correcte: són sol·licituds, encara no n'hi ha cap |
+
+El buit que bloqueja la posada en marxa és **`patrons`**: sense horari teòric no
+hi ha saldo d'hores. Cal l'horari real de cada servei, que és una dada que
+només pot donar l'ajuntament.
