@@ -116,6 +116,13 @@ select:focus-visible, textarea:focus-visible {
 .camp > label { display: block; font-weight: 600; font-size: .9rem;
                 margin-bottom: .25rem; }
 .camp .ajuda { display: block; font-size: .8rem; color: var(--text-fluix); }
+/* Interruptor: aqui l'etiqueta va AL COSTAT de la casella, no a sobre, i la
+   casella no s'ha d'estirar a tota l'amplada com fan la resta d'inputs. */
+.camp-casella > label { display: flex; align-items: center; gap: .5rem;
+                        font-weight: 600; font-size: 1rem; margin: 0; }
+.camp-casella input[type="checkbox"] { width: auto; min-height: 1.2rem;
+                                       min-width: 1.2rem; }
+form > .ajuda { font-size: .85rem; color: var(--text-fluix); max-width: 62ch; }
 input, select, textarea {
   width: 100%; padding: .65rem .6rem; font: inherit; color: var(--text);
   background: var(--paper); border: 1px solid var(--vora);

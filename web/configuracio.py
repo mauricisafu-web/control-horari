@@ -128,6 +128,24 @@ def festiu():
     return redirect(url_for("configuracio.index", any=any) + "#festius")
 
 
+@configuracio.route("/fitxatge", methods=["POST"])
+@cal_admin
+def commuta_fitxatge():
+    """Engega o apaga el fitxador.
+
+    Va en una ruta propia i no amb la resta de parametres perque una
+    casella desmarcada no envia res: alla, «no ve al formulari» vol dir
+    «no el toquis», i aqui voldria dir «apaga'l»."""
+    actiu = request.form.get("fitxatge_actiu") == "1"
+    parametres.desa(g.mag, "fitxatge_actiu", actiu)
+    registra("CONFIG", current_user.get_id(),
+             f"fitxatge {'engegat' if actiu else 'apagat'}")
+    flash("El fitxador queda engegat." if actiu else
+          "El fitxador queda apagat. Els marcatges que hi hagi es "
+          "conserven: tornar-lo a engegar es marcar aquesta casella.", "ok")
+    return _torna("fitxatge")
+
+
 @configuracio.route("/parametre", methods=["POST"])
 @cal_admin
 def parametre():

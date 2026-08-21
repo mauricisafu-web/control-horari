@@ -13,13 +13,14 @@ from flask_login import current_user, login_required
 from core import comput
 from core.model import DIES_SETMANA, MESOS
 from magatzem import comptes
-from web.comu import any_i_mes, limits_del_mes, resum_del_periode
+from web.comu import any_i_mes, cal_fitxatge, limits_del_mes, resum_del_periode
 
 hores = Blueprint("hores", __name__)
 
 
 @hores.route("/hores")
 @login_required
+@cal_fitxatge
 def resum():
     login = current_user.get_id()
     any, mes = any_i_mes()
@@ -43,6 +44,7 @@ def resum():
 
 @hores.route("/el-meu-horari")
 @login_required
+@cal_fitxatge
 def horari():
     login = current_user.get_id()
     assignacions = comptes.assignacions_de(g.mag, login)

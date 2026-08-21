@@ -43,6 +43,33 @@ def cal_admin(f):
     return envoltori
 
 
+def fitxatge_actiu() -> bool:
+    """Si el fitxador esta engegat.
+
+    Es resol UNA vegada per peticio: cada consulta es una lectura de
+    Firestore i aquesta la fa el menu de totes les pagines."""
+    if not hasattr(g, "_fitxatge"):
+        valor = parametres.tots(g.mag).get("fitxatge_actiu", True)
+        # Un "0" o un "false" arribats com a text son certs si els passes
+        # per bool(). Val mes enumerar el que vol dir apagat.
+        g._fitxatge = valor not in (False, 0, "", "0", "false", "False", None)
+    return g._fitxatge
+
+
+def cal_fitxatge(f):
+    """Tanca una pantalla mentre el fitxador estigui apagat.
+
+    Amagar l'enllac del menu i deixar la ruta oberta no es amagar res: qui
+    en sapiga l'adreca hi entraria igual. Per aixo la ruta ha de deixar
+    d'existir, no nomes de veure's."""
+    @wraps(f)
+    def envoltori(*args, **kwargs):
+        if not fitxatge_actiu():
+            abort(404)
+        return f(*args, **kwargs)
+    return envoltori
+
+
 def ambits_meus() -> list[str]:
     """Els serveis que puc aprovar. Es resol UNA vegada per petició: fer-ho
     tres cops són tres lectures del magatzem multiplicades per cada visita."""

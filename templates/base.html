@@ -16,7 +16,7 @@
 
 {% if current_user.is_authenticated %}
 <header class="capcalera">
-  <a class="marca" href="{{ url_for('fitxatge.inici') }}">Control horari</a>
+  <a class="marca" href="{{ url_for('fitxatge.inici') if fitxatge_actiu else url_for('absencies.index') }}">Control horari</a>
   <div class="jo">
     <span class="jo-nom">{{ current_user.nom }}</span>
     <a class="jo-enllac" href="{{ url_for('auth.logout') }}">Surt</a>
@@ -25,15 +25,19 @@
 
 <nav class="navegacio" aria-label="Seccions">
   {# La navegació s'amaga per rol: el que no pots fer, no el veus. #}
+  {% if fitxatge_actiu %}
   <a href="{{ url_for('fitxatge.inici') }}"    class="{{ 'actiu' if request.endpoint == 'fitxatge.inici' }}">Fitxar</a>
   <a href="{{ url_for('hores.resum') }}"       class="{{ 'actiu' if request.blueprint == 'hores' }}">Hores</a>
+  {% endif %}
   <a href="{{ url_for('absencies.index') }}"   class="{{ 'actiu' if request.blueprint == 'absencies' }}">Absències</a>
   {% if current_user.pot_aprovar %}
     <a href="{{ url_for('gestio.index') }}"    class="{{ 'actiu' if request.blueprint == 'gestio' }}">Gestió</a>
   {% endif %}
   {% if current_user.es_admin %}
     <a href="{{ url_for('configuracio.index') }}" class="{{ 'actiu' if request.blueprint == 'configuracio' }}">Configuració</a>
+    {% if fitxatge_actiu %}
     <a href="{{ url_for('informes.index') }}"     class="{{ 'actiu' if request.blueprint == 'informes' }}">Informes</a>
+    {% endif %}
   {% endif %}
 </nav>
 {% endif %}

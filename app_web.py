@@ -159,7 +159,13 @@ def crea_app(config_extra: dict | None = None, magatzem=None) -> Flask:
     # -- context de les plantilles ---------------------------------------
     @app.context_processor
     def _context():
-        return {"model": model, "any_actual": __import__("datetime").date.today().year}
+        from web.comu import fitxatge_actiu
+        return {"model": model,
+                "any_actual": __import__("datetime").date.today().year,
+                # El menu ho necessita a cada pagina. Als fulls d'error
+                # encara no hi ha magatzem: llavors val mes amagar-ho que
+                # petar mentre s'ensenya un error.
+                "fitxatge_actiu": fitxatge_actiu() if hasattr(g, "mag") else False}
 
     registra("ARRENCADA", detall=f"magatzem={conf['REBOST']}")
     return app

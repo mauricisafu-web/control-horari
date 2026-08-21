@@ -259,6 +259,12 @@ PARAMETRES_INICIALS = {
     # aixo son el mateix toc repetit a la pantalla del mobil.
     "segons_entre_marcatges": 60,
     "nom_ajuntament": "Ajuntament de la Torre de l'Espanyol",
+    # Interruptor del fitxador. Ve engegat: aquesta aplicacio es, de
+    # naixement, de control horari. Un ajuntament que nomes en vulgui la
+    # part de vacances i permisos l'apaga des de Configuracio, i llavors
+    # les pantalles de fitxar, hores i informes deixen d'existir. Apagar
+    # NO esborra res: els marcatges que hi hagi es queden on son.
+    "fitxatge_actiu": True,
 }
 
 

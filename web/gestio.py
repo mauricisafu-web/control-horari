@@ -29,8 +29,8 @@ from magatzem import (
     parametres,
 )
 from web.comu import (
-    ambits_meus, any_i_mes, cal_aprovar, jornada_maxima, limits_del_mes,
-    resum_del_periode,
+    ambits_meus, any_i_mes, cal_aprovar, cal_fitxatge, fitxatge_actiu,
+    jornada_maxima, limits_del_mes, resum_del_periode,
 )
 
 gestio = Blueprint("gestio", __name__)
@@ -76,8 +76,11 @@ def index():
         })
 
     # -- correccions de marcatge pendents ---------------------------------
+    # Amb el fitxador apagat no s'hi consulta: a mes de no tenir sentit, cada
+    # visita a aquesta pantalla seria una consulta a Firestore per a res.
     correccions = []
-    for marcatge in marcatges.pendents_validacio(g.mag, ambits):
+    for marcatge in (marcatges.pendents_validacio(g.mag, ambits)
+                     if fitxatge_actiu() else ()):
         treballador = comptes.per_login(g.mag, marcatge.treballador_id)
         original = (marcatges.per_id(g.mag, marcatge.anul_la_id)
                     if marcatge.anul_la_id else None)
@@ -153,6 +156,7 @@ def resol():
 
 @gestio.route("/gestio/marcatge", methods=["POST"])
 @cal_aprovar
+@cal_fitxatge
 def marcatge():
     marcatge_id = request.form.get("marcatge", "")
     accepta = request.form.get("accio") == "valida"
@@ -187,6 +191,7 @@ def marcatge():
 
 @gestio.route("/gestio/hores")
 @cal_aprovar
+@cal_fitxatge
 def hores():
     ambits = ambits_meus()
     any, mes = any_i_mes()

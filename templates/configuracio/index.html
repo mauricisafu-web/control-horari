@@ -91,6 +91,28 @@
   </form>
 </div>
 
+{# -- fitxador -------------------------------------------------------------- #}
+<div class="targeta" id="fitxatge">
+  <h2>Fitxador</h2>
+  <form method="post" action="{{ url_for('configuracio.commuta_fitxatge') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <p class="camp camp-casella">
+      <label>
+        <input type="checkbox" name="fitxatge_actiu" value="1"
+               {{ 'checked' if fitxatge_actiu }}>
+        Fitxar entrades i sortides
+      </label>
+    </p>
+    <p class="ajuda">
+      Apagat, l'aplicació només serveix per demanar i aprovar vacances i
+      assumptes propis: desapareixen les pantalles de fitxar, d'hores i
+      d'informes. <strong>Apagar no esborra res</strong>: els marcatges que hi
+      hagi es conserven i tornar-ho a engegar és marcar aquesta casella.
+    </p>
+    <p class="accions"><button class="btn" type="submit">Desa</button></p>
+  </form>
+</div>
+
 {# -- paràmetres ----------------------------------------------------------- #}
 <div class="targeta" id="parametres">
   <h2>Paràmetres</h2>

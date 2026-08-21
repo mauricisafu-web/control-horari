@@ -25,8 +25,8 @@ from magatzem import (
     marcatges, parametres,
 )
 from web.comu import (
-    any_i_mes, correus_dels_aprovadors, jornada_maxima, limits_del_mes,
-    resum_del_periode,
+    any_i_mes, cal_fitxatge, correus_dels_aprovadors, fitxatge_actiu,
+    jornada_maxima, limits_del_mes, resum_del_periode,
 )
 
 fitxatge = Blueprint("fitxatge", __name__)
@@ -42,6 +42,11 @@ ACCIO_ETIQUETA = {
 @fitxatge.route("/")
 @login_required
 def inici():
+    # Aquesta es l'arrel de l'aplicacio. Amb el fitxador apagat no pot
+    # respondre 404 com les altres pantalles: qui entra ha d'anar a parar
+    # a alguna banda, i aquella banda son les absencies.
+    if not fitxatge_actiu():
+        return redirect(url_for("absencies.index"))
     login = current_user.get_id()
     avui = date.today()
 
@@ -69,6 +74,7 @@ def inici():
 
 @fitxatge.route("/fitxa", methods=["POST"])
 @login_required
+@cal_fitxatge
 def fitxa():
     login = current_user.get_id()
     tipus = request.form.get("tipus", "")
@@ -98,6 +104,7 @@ def fitxa():
 
 @fitxatge.route("/marcatges")
 @login_required
+@cal_fitxatge
 def llista():
     login = current_user.get_id()
     any, mes = any_i_mes()
@@ -119,6 +126,7 @@ def llista():
 
 @fitxatge.route("/marcatges/corregeix", methods=["POST"])
 @login_required
+@cal_fitxatge
 def corregeix():
     login = current_user.get_id()
     from datetime import datetime, timezone

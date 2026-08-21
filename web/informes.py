@@ -27,7 +27,7 @@ from core.registre import registra
 from magatzem import (
     absencies as mag_absencies, activitat, comptes, festius, marcatges,
 )
-from web.comu import a_data, cal_admin, jornada_maxima
+from web.comu import a_data, cal_admin, cal_fitxatge, jornada_maxima
 
 informes = Blueprint("informes", __name__)
 
@@ -39,6 +39,7 @@ MAXIM_DIES_UNA_PERSONA = 366
 
 @informes.route("/informes")
 @cal_admin
+@cal_fitxatge
 def index():
     avui = date.today()
     return render_template("informes/index.html",
@@ -86,6 +87,7 @@ def _dades(login: str, inici: date, fi: date):
 
 @informes.route("/informes/genera", methods=["POST"])
 @cal_admin
+@cal_fitxatge
 def genera():
     login = (request.form.get("treballador") or "").strip()
     inici = a_data(request.form.get("inici"))

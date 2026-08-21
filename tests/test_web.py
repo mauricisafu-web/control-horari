@@ -65,6 +65,7 @@ def test_cap_ruta_de_l_aplicacio_es_queda_sense_provar(app):
         "/fitxa", "/marcatges/corregeix", "/absencies/solicita",
         "/absencies/anula", "/gestio/resol", "/gestio/marcatge",
         "/configuracio/servei", "/configuracio/festiu", "/configuracio/parametre",
+        "/configuracio/fitxatge",
         "/configuracio/patro", "/configuracio/assignacio", "/configuracio/compte",
         "/informes/genera",
     }
