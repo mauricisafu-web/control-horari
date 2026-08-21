@@ -1,91 +1,142 @@
-# Encàrrec · Botó d'exportació de treballadors, dins de nòmines
+# Encàrrec · Exportació de treballadors i enviament de credencials, dins de nòmines
 
-**Per a l'altre xat (el de `expedients-nomines-beta`). No toca res de
-`control-horari`: només el llegeix com a referència del contracte.**
+**Per a l'altre xat (el de `expedients-nomines-beta`). Aquest document viu al
+repositori del control horari perquè és qui en defineix el contracte, però
+tota la feina que descriu es fa a `nòmines-beta`.**
 
-## Objectiu
+---
 
-Un botó a `Configuració → Usuaris` (`/usuaris`, `templates/usuaris.html`) que
-generi i descarregui directament el CSV que la pantalla `Configuració →
-Importa` del control horari sap llegir. Avui aquest fitxer es genera a mà
-amb `python eines/exporta_des_de_nomines.py prepara`, executat des d'un
-terminal a `control-horari`; l'objectiu és estalviar-se aquest pas.
+## 0. Per què, i on encaixa cada app
 
-**Res del que fa aquest botó escriu res a `nòmines`.** És una exportació de
-sola lectura: no toca `treballadors.xlsx`, `usuaris.ini` ni
-`dades_vacances.json`.
+Decisió d'arquitectura de l'ajuntament (2026-08-21):
 
-## Una troballa important abans de picar codi
+> **El servidor de l'ajuntament no ha d'intercanviar dades per Internet.**
 
-`nòmines-beta` ja té un mòdul de «Gestió de personal» sencer —vacances,
-saldos, aprovació per servei, calendari— a `core/vacances/magatzem.py` /
-`dades_vacances.json` (disseny a `VACANCES_DISSENY.md`, 2026-07-21). Cada
-treballador hi té un `servei` assignat (Oficines / Brigada / SAIAR).
+D'aquí surt el repartiment:
 
-`treballadors.xlsx`, en canvi, només té `Nom | Correu`: cap servei.
+| | **nòmines-beta** (local, LAN) | **control-horari** (Firebase, públic) |
+|---|---|---|
+| Nòmines, factures, expedients | ✅ s'hi queda | ❌ mai |
+| Historial i repositori de nòmines | ✅ s'hi queda | ❌ mai |
+| Enviament de correus (SMTP) | ✅ **l'única sortida a Internet** | ❌ no en té |
+| Sol·licitud i autorització de vacances i permisos | ⏸️ es congela | ✅ passa aquí |
 
-**Aprofita-ho:** la llista completa de gent surt de `treballadors.xlsx` (és
-la que està sempre al dia, ~25 persones); el `servei` de cadascú s'agafa de
-`_vac().carrega()['treballadors']` quan hi hagi una fila amb el mateix
-correu (comparació en minúscules). Si no hi és, `servei` queda buit, com ara.
+`nòmines` continua sent la font de veritat de **qui treballa a l'ajuntament**
+i l'**única passarel·la de correu**. El control horari no té ni tindrà SMTP:
+és al núvol, i fer-hi passar credencials de correu de l'ajuntament seria
+contradir la decisió de dalt.
 
-Això no és una decisió de si el mòdul vell es retira o no —això et toca
-decidir-ho a tu— és només aprofitar una dada que ja existeix perquè el CSV
-surti més complet.
+Per tant nòmines ha de saber fer dues coses noves, totes dues des de
+**Configuració → Usuaris** (`/usuaris`, `templates/usuaris.html`):
 
-## El contracte del fitxer (CONGELAT, no es toca)
+1. **Generar el CSV** de treballadors per carregar al control horari.
+2. **Enviar a cadascú, per correu, el seu usuari i la contrasenya
+   provisional**, amb l'SMTP que nòmines ja té configurat i funcionant.
 
-Definit a `control-horari/core/format_importacio.py`. Si mai canvia, canvia
-allà i s'avisa als dos costats; aquí només es reprodueix:
+Avui totes dues coses ja existeixen, però com a eina de línia d'ordres
+(`control-horari/eines/exporta_des_de_nomines.py`, ordres `prepara` i
+`envia`), que s'ha d'executar des d'un terminal a l'altre projecte. L'objectiu
+és portar-ho a un botó.
+
+---
+
+## 1. El problema de disseny que cal resoldre primer
+
+Les contrasenyes provisionals han de **coincidir** en dos llocs:
+
+- al **correu** que rep cada treballador, i
+- a la columna `contrasenya` del **CSV** que es puja al control horari (que és
+  on es xifren i es desen).
+
+Si el botó de descarregar i el d'enviar les generessin cadascun per la seva
+banda, ningú podria entrar: el correu diria una cosa i el servidor n'esperaria
+una altra.
+
+**Solució: el fitxer és el portador.** Dos passos, i les contrasenyes només
+existeixen dins del CSV que l'administrador té a les mans:
+
+```
+   [Pas 1]  Botó «Generar CSV»  ──► es descarrega treballadors-AAAA-MM-DD.csv
+                                     (conté les contrasenyes en clar)
+                     │
+                     ├──► l'administrador el REVISA (serveis, rols, i buida
+                     │     la columna «contrasenya» de qui ja tingui compte)
+                     │
+   [Pas 2a] Formulari «Enviar credencials» ──► s'hi torna a pujar el MATEIX
+                     │                          fitxer; nòmines envia els correus
+                     │
+   [Pas 2b] El mateix fitxer es puja a
+            control-horari → Configuració → Importa
+```
+
+És exactament el que fa avui l'eina de línia d'ordres (`prepara` genera,
+`envia --fitxer` envia), o sigui que el flux ja està provat. **No inventis un
+tercer camí** (guardar les contrasenyes a la sessió, a un fitxer temporal o a
+la base de dades): serien contrasenyes en clar persistides, que és justament
+el que aquest disseny evita.
+
+---
+
+## 2. El contracte del fitxer (CONGELAT, no es toca)
+
+Definit a `control-horari/core/format_importacio.py`. Si mai ha de canviar,
+canvia allà primer i s'avisa als dos costats.
 
 - Separador `;`, codificació `utf-8-sig` (amb BOM, perquè l'Excel l'obri bé)
-- Columnes, en aquest ordre:
+- Columnes, en aquest ordre exacte:
   `usuari;nom;correu;servei;rol;data_alta;contrasenya`
 - `usuari`, `nom`, `correu` obligatoris; la resta poden anar buides
-- `rol` buit vol dir «treballador» al control horari — deixa-ho sempre buit,
-  l'administrador ja ho ajusta allà si cal
-- `data_alta` buida sempre (només cal per a altes a mig any, i això s'edita
-  a mà)
+- `rol` buit = «treballador» al control horari. Deixa'l sempre buit: ja
+  s'ajusta allà
+- `data_alta` buida sempre (només cal per a altes a mig any, i s'edita a mà)
+- `contrasenya` buida = el control horari en genera una i la mostra una sola
+  vegada per pantalla. **Una càrrega no canvia mai la contrasenya de ningú que
+  ja tingui compte**
 
-## Peces que ja existeixen a `nòmines` i es poden reutilitzar tal qual
+---
 
-- **La llista de gent**: `_llegeix_treballadors()` (línia ~490 d'`app_web.py`)
-  — `[(nom, correu), ...]` de `treballadors.xlsx`.
-- **El servei de cadascú**: `_vac().carrega()['treballadors']` — dict
-  `usuari_intern -> {'nom', 'correu', 'servei', 'saldos'}`. Fes-ne un índex
-  per correu en minúscules abans de creuar-lo amb la llista de dalt.
-- **La contrasenya provisional**: `_genera_contrasenya(longitud=14)` (línia
-  ~374). Ja exclou `l1IO0` i ja fa 14 caràcters: exactament la política que
-  demana `control-horari/core/comptes.py` (`LLARGADA_PROVISIONAL = 14`,
-  mateix alfabet). No cal escriure'n una altra.
-- **El patró de descàrrega en memòria**: mira `vacances_nomines_descarrega()`
-  (línia ~3308) — ruta `GET`, `send_file(io.BytesIO(...), as_attachment=True,
-  download_name=..., mimetype=...)`, amb
-  `resp.headers['Cache-Control'] = 'no-store'`. Copia aquest patró, no el de
-  `/exporta` (aquell és `POST` perquè rep un PDF pujat; aquí no cal pujar res,
-  així que `GET` i un simple `<a>` ja fan).
+## 3. Peces de nòmines que es reutilitzen tal qual
 
-## El que falta escriure
+| Què | On | Nota |
+|---|---|---|
+| Llista de gent | `_llegeix_treballadors()` (línia ~490) | `[(nom, correu)]` de `treballadors.xlsx` |
+| Servei de cadascú | `_vac().carrega()['treballadors']` | dict `usuari -> {nom, correu, servei, saldos}` |
+| Contrasenya provisional | `_genera_contrasenya(longitud=14)` (línia ~374) | Ja exclou `l1IO0` i ja fa 14 caràcters: **exactament** la política de `control-horari/core/comptes.py`. No n'escriguis una altra |
+| Connexió SMTP | `_config_smtp()` + `connecta_smtp()` d'`envia_nomines.py` | El mateix `config.ini` de sempre |
+| Descàrrega en memòria | `vacances_nomines_descarrega()` (línia ~3308) | `send_file(io.BytesIO(...), as_attachment=True, ...)` + `Cache-Control: no-store` |
+| Registre d'auditoria | `registra(...)` | Com la resta de l'app |
 
-### Proposta de nom d'usuari
+**Aprofita el `servei`.** `treballadors.xlsx` només té `Nom | Correu`, però el
+mòdul de Gestió de personal (`dades_vacances.json`) ja té el servei de
+cadascú. Creua'ls **pel correu en minúscules**; si no hi ha coincidència,
+`servei` queda buit. Això estalvia omplir a mà una columna de ~25 files.
 
-`nòmines` no en té cap (l'alta d'usuaris és manual, un a un). Porta
-l'algorisme de `control-horari/eines/exporta_des_de_nomines.py::
-proposa_usuari()`: inicial del nom + primer cognom, sense accents, només
-`a-z`; si xoca amb un que ja s'ha proposat en aquesta mateixa exportació,
-s'allarga amb lletres del cognom següent (mai amb xifres). Porta-la's tal
-qual —ja està provada i resol bé els casos de noms repetits— com a funció
-nova dins de `nòmines`, no com una importació entre apps (les dues han de
-seguir sent independents).
+---
 
-### La ruta
+## 4. El que cal escriure
+
+### 4.1 Proposta de nom d'usuari
+
+`nòmines` no en té cap (les altes són manuals, d'una en una). Porta
+l'algorisme de `control-horari/eines/exporta_des_de_nomines.py::proposa_usuari()`:
+
+- inicial del nom + primer cognom, sense accents, només `a-z`
+- partícules que no compten: `de, del, la, los, las, i, ma`
+- si xoca amb un ja proposat **en aquesta mateixa exportació**, s'allarga amb
+  lletres del cognom següent — **mai amb xifres** (un `jgarcia2` no diu res a
+  ningú i s'escriu malament la meitat de les vegades)
+
+Porta-la's com a funció nova dins de nòmines, **no** com una importació entre
+projectes: les dues apps han de continuar sent independents.
+
+### 4.2 Pas 1 — la ruta que genera el CSV
 
 ```python
 @app.route('/usuaris/exporta-control-horari')
 @admin_required
 def usuaris_exporta_control_horari():
     """CSV per carregar a Configuració → Importa del control horari.
-    Sola lectura: no desa res a nòmines."""
+    SOLA LECTURA: no desa res a nòmines."""
     persones = _llegeix_treballadors()
     if not persones:
         flash('No hi ha cap treballador a la llista.', 'error')
@@ -96,80 +147,174 @@ def usuaris_exporta_control_horari():
         for v in _vac().carrega()['treballadors'].values()
     }
 
-    usats = set()
-    files = []
+    usats, files = set(), []
     for nom, correu in persones:
-        usuari = proposa_usuari(nom, usats)   # la funció portada
+        usuari = proposa_usuari(nom, usats)
         usats.add(usuari)
         files.append({
             'usuari': usuari, 'nom': nom, 'correu': correu,
-            'servei': per_correu.get(correu.strip().lower(), ''),
+            'servei': per_correu.get((correu or '').strip().lower(), ''),
             'rol': '', 'data_alta': '',
             'contrasenya': _genera_contrasenya(14),
         })
 
     buf = io.StringIO()
-    escriptor = csv.DictWriter(
-        buf, fieldnames=['usuari', 'nom', 'correu', 'servei', 'rol',
-                         'data_alta', 'contrasenya'],
-        delimiter=';', extrasaction='ignore')
-    escriptor.writeheader()
-    escriptor.writerows(files)
+    w = csv.DictWriter(buf, fieldnames=['usuari', 'nom', 'correu', 'servei',
+                                        'rol', 'data_alta', 'contrasenya'],
+                       delimiter=';', extrasaction='ignore')
+    w.writeheader()
+    w.writerows(files)
     contingut = ('﻿' + buf.getvalue()).encode('utf-8')
 
     registra('EXPORTA_TREBALLADORS_CH', f'{len(files)} treballadors')
-    nom_fitxer = f'treballadors-{date.today().isoformat()}.csv'
     resp = send_file(io.BytesIO(contingut), as_attachment=True,
-                     download_name=nom_fitxer, mimetype='text/csv')
+                     download_name=f'treballadors-{date.today().isoformat()}.csv',
+                     mimetype='text/csv')
     resp.headers['Cache-Control'] = 'no-store'
     return resp
 ```
 
-Ajusta noms de funcions/imports al que ja hi hagi importat dalt de
-`app_web.py` (`io`, `csv`, `date` seur segur que ja hi són; comprova-ho abans
-d'afegir-los duplicats).
+Comprova quins d'`io`, `csv`, `date` ja són importats a dalt d'`app_web.py`
+abans d'afegir-los.
 
-### La plantilla
+### 4.3 Pas 2 — la ruta que envia les credencials
 
-A `templates/usuaris.html`, una targeta petita, per exemple després de la
-d'«Afegir un treballador»:
+Rep el CSV **ja revisat** i envia un correu a cada fila **que tingui
+contrasenya**. Les files amb `contrasenya` buida se salten en silenci: són la
+gent que ja té compte i a qui no s'ha de tocar res.
+
+**Dos passos obligatoris, com a l'eina de línia d'ordres.** Enviar dues
+dotzenes de correus reals a persones reals no ha de poder passar d'un clic
+accidental:
+
+1. `accio=previsualitza` → pantalla amb **a qui s'escriuria** (usuari i
+   correu; **mai la contrasenya**) i quantes files se saltarien, sense enviar
+   res.
+2. `accio=confirma` → envia de debò.
+
+```python
+@app.route('/usuaris/envia-credencials-control-horari', methods=['POST'])
+@admin_required
+def usuaris_envia_credencials_ch():
+    fitxer = request.files.get('csv')
+    if not fitxer or not fitxer.filename:
+        flash('Cal seleccionar el CSV generat al pas anterior.', 'error')
+        return redirect(url_for('usuaris'))
+    # lectura amb utf-8-sig i delimitador ';'
+    # ...
+    # accio == 'previsualitza' -> render de la llista, sense enviar
+    # accio == 'confirma'      -> connecta_smtp() i envia un a un
+```
+
+**FAIL-SOFT en l'enviament**, com fa `core/vacances/notifica.py`: si un correu
+rebota, s'anota i **es continua amb la resta**. En acabar, es mostra qui NO
+l'ha rebut, perquè es pugui reintentar amb un fitxer que només tingui aquelles
+files. Que una adreça mal escrita deixi mitja plantilla sense credencials
+seria pitjor que l'error original.
+
+Cos del correu (adapta'l al to de la resta de correus de l'app):
+
+```
+Hola, {nom}.
+
+Ja tens compte a l'aplicació de control horari de l'Ajuntament:
+
+    https://control-horari-torre-espanyol.web.app
+
+    Usuari: {usuari}
+    Contrasenya provisional: {contrasenya}
+
+Aquesta contrasenya és PROVISIONAL: la primera vegada que entris,
+l'aplicació t'obligarà a canviar-la. Fes-ho de seguida, perquè ha viatjat
+per correu i el correu no és un canal segur.
+
+Atentament,
+Ajuntament de la Torre de l'Espanyol
+```
+
+### 4.4 La interfície
+
+A `templates/usuaris.html`, una targeta amb els dos passos junts, perquè
+l'ordre quedi clar:
 
 ```html
 <div class="card">
-  <h1>Exportar per al control horari</h1>
+  <h1>Control horari — altes de treballadors</h1>
   <p class="subtitol">
-    Genera el fitxer per carregar a <em>Configuració → Importa</em> del
-    control horari, amb una contrasenya provisional per a tothom.
+    L'aplicació de control horari és fora de l'ajuntament i no té correu
+    propi: les credencials les envia nòmines des d'aquí.
   </p>
+
+  <h2>Pas 1 · Generar el fitxer</h2>
   <p class="accions">
     <a class="btn" href="{{ url_for('usuaris_exporta_control_horari') }}">
       Descarregar CSV
     </a>
   </p>
   <p class="ajuda">
-    ⚠ El fitxer porta contrasenyes en clar. Abans de pujar-lo, buida la
-    columna «contrasenya» de qui ja tingui compte al control horari (una
-    càrrega no la hi canvia), i esborra el fitxer quan hagis acabat.
+    Revisa'l abans de continuar: comprova els serveis i <strong>buida la
+    columna «contrasenya» de qui ja tingui compte</strong> al control horari.
+  </p>
+
+  <h2>Pas 2 · Enviar les credencials</h2>
+  <form method="post" enctype="multipart/form-data"
+        action="{{ url_for('usuaris_envia_credencials_ch') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="file" name="csv" accept=".csv" required>
+    <button class="btn btn-secundari" name="accio" value="previsualitza"
+            type="submit">Veure a qui s'enviaria</button>
+  </form>
+  <p class="ajuda">
+    Puja <strong>el mateix fitxer</strong> del pas 1: les contrasenyes del
+    correu han de ser les que després es carreguen al control horari.
+  </p>
+
+  <p class="ajuda">
+    ⚠ El CSV porta contrasenyes en clar. No l'enviïs per correu, no el
+    deixis en una carpeta compartida i <strong>esborra'l</strong> quan
+    l'hagis pujat al control horari.
   </p>
 </div>
 ```
 
-## Un avís de l'altra banda
+---
 
-`control-horari/eines/exporta_des_de_nomines.py` va petar fa poc en
-producció (Windows, consola en `cp1252`, no accepta `⚠✓✗` als missatges de
-terminal). Aquí no aplica igual —és HTML, no terminal— però si en algun
-moment aquest botó escriu res per `print()` en comptes de `flash()`,
-vigileu-hi.
+## 5. Proves mínimes
 
-## Prova mínima que hi hauria de ser
+Al fitxer de proves web que ja hi hagi:
 
-Una prova que pugi un `treballadors.xlsx` sintètic (com fa
-`tests/test_vacances_web.py` o semblant) i comprovi:
-
-- la resposta és un `text/csv` amb `Content-Disposition: attachment`
-- la primera línia (decodificada com a `utf-8-sig`) és exactament
+**Generació**
+- La resposta és `text/csv` amb `Content-Disposition: attachment`
+- La primera línia, decodificada com a `utf-8-sig`, és exactament
   `usuari;nom;correu;servei;rol;data_alta;contrasenya`
-- una persona que surti a `dades_vacances.json` amb `servei: "Oficines"` surt
-  al CSV amb `servei` omplert; una que no hi surti, amb `servei` buit
-- dues persones amb el mateix cognom no reben el mateix `usuari`
+- Una persona que a `dades_vacances.json` tingui `servei: "Oficines"` surt amb
+  el `servei` omplert; una que no hi sigui, amb el `servei` buit
+- Dues persones amb el mateix cognom **no** reben el mateix `usuari`
+- La ruta no modifica `treballadors.xlsx` ni `dades_vacances.json` (compara
+  les mtimes abans i després)
+- Un usuari no administrador rep 403
+
+**Enviament**
+- `accio=previsualitza` **no** obre cap connexió SMTP (monkeypatch que ho
+  detecti) i **no** ensenya cap contrasenya al HTML
+- Les files amb `contrasenya` buida se salten
+- Amb un SMTP fals que rebutgi la segona adreça, les altres s'envien igualment
+  i la pantalla final diu quina ha fallat
+- Un usuari no administrador rep 403
+
+---
+
+## 6. Un avís de l'altra banda
+
+`control-horari/eines/exporta_des_de_nomines.py` va petar en producció perquè
+escrivia `⚠ ✓ ✗` per consola i el Windows de l'ajuntament la té en `cp1252`.
+Aquí no aplica igual (és HTML), però si en algun punt aquest codi escriu per
+`print()` en comptes de `flash()`, vigileu-ho.
+
+---
+
+## 7. Quan estigui fet
+
+L'eina `control-horari/eines/exporta_des_de_nomines.py` es podrà retirar (o
+deixar com a via de recanvi documentada). Avisa'm i ho marco a l'`ESTAT.md`
+del control horari.
