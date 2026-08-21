@@ -127,6 +127,7 @@ ni pot revisar si aquesta autorització és suficient.
 | 2026-08-10 | Construcció feta per Opus en una sola sessió, no repartida entre agents |
 | 2026-08-20 | Desplegament real fet amb Sonnet, guiant l'usuari pas a pas per les accions que exigien el seu compte (autenticacions OAuth, facturació, alerta de pressupost) |
 | 2026-08-20 | L'usuari confirma que introduirà dades reals sota la seva pròpia autorització, sense esperar el tràmit formal del DPD |
+| 2026-08-21 | **Els avisos es fan per push al mòbil, no per correu.** L'ajuntament no vol que les credencials del seu servidor de correu surtin cap al núvol; un avís push no en necessita cap, i el contingut viatja xifrat d'extrem a extrem. El correu queda al codi per si algun dia es configura |
 | 2026-08-21 | **El fitxador s'apaga a producció.** De moment l'ajuntament només vol demanar i aprovar vacances i permisos. No s'esborra: es queda darrere d'un interruptor a Configuració, i tornar-lo a engegar és marcar una casella |
 
 ---
@@ -137,6 +138,7 @@ ni pot revisar si aquesta autorització és suficient.
 |---|---|---|---|---|
 | 2026-08-10 | `main` | local (Docker i `python app_web.py`) | Opus | Recorregut sencer amb dades sintètiques |
 | 2026-08-20 | `4a97e46` | Firebase (`control-horari-torre-espanyol`) | Sonnet, amb l'usuari | Desplegament real: Hosting + Cloud Run + Firestore. Verificat: `/avis-legal` i `/manifest.webmanifest` responen 200 per la URL pública; la URL directa de Cloud Run dona 403 |
+| 2026-08-21 | `control-horari-00006-gwk` | Firebase (`control-horari-torre-espanyol`) | Opus | Avisos push. Verificat: el service worker desplegat porta els gestors de `push` i `notificationclick`, l'avís legal els documenta i les claus VAPID arriben al contenidor |
 | 2026-08-21 | `control-horari-00003-d8h` | Firebase (`control-horari-torre-espanyol`) | Opus | Interruptor del fitxador, i apagat a producció. Verificat: l'aplicació respon i `/` redirigeix |
 | 2026-08-21 | `control-horari-00002-tlg` | Firebase (`control-horari-torre-espanyol`) | Opus | Correcció de la galeta `__session`. Verificat en producció: la sessió es manté entre peticions, el testimoni CSRF és estable i el POST de `/login` supera la comprovació CSRF |
 

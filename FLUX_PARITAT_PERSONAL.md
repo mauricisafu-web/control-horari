@@ -29,7 +29,31 @@ llegint els dos codis, i l'ordre en què convé tancar-les.
 
 ## Els buits, verificats
 
-### 🔴 B1 · No surt cap correu de producció
+### ✅ B1 · Avisos — **RESOLT el 2026-08-21**
+
+**Decisió de l'ajuntament: avís push al mòbil, no correu.** La PWA llança
+l'avís i el servidor municipal no hi té res a veure. Implementat i
+desplegat (revisió `control-horari-00006-gwk`).
+
+El que cal saber-ne:
+
+- El contingut viatja **xifrat d'extrem a extrem** (RFC 8291). El servei
+  de push del fabricant del navegador el transporta però **no el pot
+  llegir**; en veu només l'existència i cap a quin dispositiu va.
+- Els textos són **genèrics** perquè es llegeixen a la pantalla de
+  bloqueig: mai diuen qui demana, ni quants dies, ni quin període.
+- **A l'iPhone cal tenir l'aplicació afegida a la pantalla d'inici.** Des
+  del Safari normal, l'iOS no deixa subscriure-s'hi. La pàgina
+  d'instal·lació ho explica i el botó ho detecta.
+- Un avís **no és un registre durable** com un correu: si el mòbil ha
+  estat apagat un dia, caduca. Per això la pantalla de gestió continua
+  sent la font de veritat del que hi ha pendent.
+- El correu **no s'ha tret**: si algun dia es configura `SMTP_HOST`,
+  torna a funcionar sol, en paral·lel al push.
+
+<details><summary>Com estava abans (per al registre)</summary>
+
+#### El problema original
 
 **El més greu, i no és codi.** El servei desplegat a Cloud Run **no té cap
 variable `SMTP_*` configurada**; ho he comprovat al servei. `core/notifica.py`
@@ -55,8 +79,10 @@ fail-soft, avisa l'aprovador en sol·licitar i el treballador en resoldre).
 - **(c) Deixar-ho sense correu** i que la gent hi entri. Funciona, però
   n'has de ser conscient: sense avisos, les sol·licituds s'encallen.
 
-La (a) és la que menys friccions té i la que tota la resta del disseny ja
-suposa. **Digues quina vols abans que ningú comenci per aquí.**
+L'ajuntament va triar una quarta via que no era a la llista: **avisos push**,
+que no necessiten cap credencial de correu enlloc.
+
+</details>
 
 ---
 
@@ -176,7 +202,7 @@ repartir; entre onades, sí que hi ha ordre.
 
 | | Encàrrec | Fitxers | Depèn de |
 |---|---|---|---|
-| **P0** | **Decidir B1** (correu) i aplicar-ho | configuració de Cloud Run, o disseny nou | **tu** |
+| ~~P0~~ | ~~B1 · avisos~~ | ✅ fet: `core/push.py`, `magatzem/subscripcions.py`, `web/pwa.py`, `static/sw.js` | — |
 | **P1** | B4 · màquina d'estats | `core/model.py`, `core/regles.py`, `magatzem/absencies.py` | — |
 
 `P1` no depèn de `P0` i es pot començar ja.
