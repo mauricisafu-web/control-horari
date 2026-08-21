@@ -127,6 +127,7 @@ ni pot revisar si aquesta autorització és suficient.
 | 2026-08-10 | Construcció feta per Opus en una sola sessió, no repartida entre agents |
 | 2026-08-20 | Desplegament real fet amb Sonnet, guiant l'usuari pas a pas per les accions que exigien el seu compte (autenticacions OAuth, facturació, alerta de pressupost) |
 | 2026-08-20 | L'usuari confirma que introduirà dades reals sota la seva pròpia autorització, sense esperar el tràmit formal del DPD |
+| 2026-08-21 | **El fitxador s'apaga a producció.** De moment l'ajuntament només vol demanar i aprovar vacances i permisos. No s'esborra: es queda darrere d'un interruptor a Configuració, i tornar-lo a engegar és marcar una casella |
 
 ---
 
@@ -136,6 +137,7 @@ ni pot revisar si aquesta autorització és suficient.
 |---|---|---|---|---|
 | 2026-08-10 | `main` | local (Docker i `python app_web.py`) | Opus | Recorregut sencer amb dades sintètiques |
 | 2026-08-20 | `4a97e46` | Firebase (`control-horari-torre-espanyol`) | Sonnet, amb l'usuari | Desplegament real: Hosting + Cloud Run + Firestore. Verificat: `/avis-legal` i `/manifest.webmanifest` responen 200 per la URL pública; la URL directa de Cloud Run dona 403 |
+| 2026-08-21 | `control-horari-00003-d8h` | Firebase (`control-horari-torre-espanyol`) | Opus | Interruptor del fitxador, i apagat a producció. Verificat: l'aplicació respon i `/` redirigeix |
 | 2026-08-21 | `control-horari-00002-tlg` | Firebase (`control-horari-torre-espanyol`) | Opus | Correcció de la galeta `__session`. Verificat en producció: la sessió es manté entre peticions, el testimoni CSRF és estable i el POST de `/login` supera la comprovació CSRF |
 
 ---
@@ -147,9 +149,9 @@ ni pot revisar si aquesta autorització és suficient.
 | `serveis` | 3 | Oficines, Brigada, SAIAR |
 | `festius` | 2 | anys 2026 i 2027 importats |
 | `treballadors` | 1 | només `msabaterf` (administrador) |
-| `patrons` | **0** | **buit: cap horari teòric definit** |
+| `patrons` | 0 | buit, i **de moment no cal**: amb el fitxador apagat no hi ha saldo d'hores a calcular, i les vacances es compten en dies hàbils de calendari |
 | `absencies` | 0 | correcte: són sol·licituds, encara no n'hi ha cap |
 
-El buit que bloqueja la posada en marxa és **`patrons`**: sense horari teòric no
-hi ha saldo d'hores. Cal l'horari real de cada servei, que és una dada que
-només pot donar l'ajuntament.
+Amb el fitxador apagat, el que queda per posar-ho en marxa és **carregar la
+plantilla**: no cal cap patró d'horari. Els patrons només tornaran a fer falta
+el dia que s'engegui el fitxatge.

@@ -1,0 +1,18 @@
+# Construccio de la imatge. Cal un fitxer de configuracio i no un
+# `gcloud run deploy --source .` perque el Dockerfile no viu a l'arrel del
+# projecte sino aqui, i la versio de gcloud instal.lada no te cap opcio per
+# dir-li on es: sense aixo, se salta el Dockerfile i fa servir buildpacks,
+# que no instal.len tzdata i tomben l'aplicacio en arrencar.
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - desplegament/Dockerfile
+      - -t
+      - ${_IMATGE}:${_ETIQUETA}
+      - .
+images:
+  - ${_IMATGE}:${_ETIQUETA}
+options:
+  logging: CLOUD_LOGGING_ONLY
